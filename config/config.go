@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/BurntSushi/toml"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -71,15 +73,22 @@ type Config struct {
 
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
-	return &Config{
-		BaseConfig:      DefaultBaseConfig(),
-		RPC:             DefaultRPCConfig(),
-		P2P:             DefaultP2PConfig(),
-		Mempool:         DefaultMempoolConfig(),
-		Consensus:       DefaultConsensusConfig(),
-		TxIndex:         DefaultTxIndexConfig(),
-		Instrumentation: DefaultInstrumentationConfig(),
+	//return &Config{
+	//	BaseConfig:      DefaultBaseConfig(),
+	//	RPC:             DefaultRPCConfig(),
+	//	P2P:             DefaultP2PConfig(),
+	//	Mempool:         DefaultMempoolConfig(),
+	//	Consensus:       DefaultConsensusConfig(),
+	//	TxIndex:         DefaultTxIndexConfig(),
+	//	Instrumentation: DefaultInstrumentationConfig(),
+	//}
+	var conf *Config
+	conf = new(Config)
+	if _, err := toml.DecodeFile("m.toml", conf); err != nil {
+		panic(err)
 	}
+	spew.Dump(conf)
+	return conf
 }
 
 // TestConfig returns a configuration that can be used for testing
@@ -143,53 +152,53 @@ type BaseConfig struct {
 
 	// TCP or UNIX socket address of the ABCI application,
 	// or the name of an ABCI application compiled in with the Tendermint binary
-	ProxyApp string `mapstructure:"proxy_app"`
+	ProxyApp string `toml:"proxy_app" mapstructure:"proxy_app"`
 
 	// A custom human readable name for this node
-	Moniker string `mapstructure:"moniker"`
+	Moniker string `toml:"moniker" mapstructure:"moniker"`
 
 	// If this node is many blocks behind the tip of the chain, FastSync
 	// allows them to catchup quickly by downloading blocks in parallel
 	// and verifying their commits
-	FastSync bool `mapstructure:"fast_sync"`
+	FastSync bool `toml:"fast_sync" mapstructure:"fast_sync"`
 
 	// Database backend: leveldb | memdb | cleveldb
-	DBBackend string `mapstructure:"db_backend"`
+	DBBackend string `toml:"db_backend" mapstructure:"db_backend"`
 
 	// Database directory
-	DBPath string `mapstructure:"db_dir"`
+	DBPath string `toml:"db_dir" mapstructure:"db_dir"`
 
 	// Output level for logging
-	LogLevel string `mapstructure:"log_level"`
+	LogLevel string `toml:"log_level" mapstructure:"log_level"`
 
 	// Output format: 'plain' (colored text) or 'json'
-	LogFormat string `mapstructure:"log_format"`
+	LogFormat string `toml:"log_format" mapstructure:"log_format"`
 
 	// Path to the JSON file containing the initial validator set and other meta data
-	Genesis string `mapstructure:"genesis_file"`
+	Genesis string `toml:"genesis_file" mapstructure:"genesis_file"`
 
 	// Path to the JSON file containing the private key to use as a validator in the consensus protocol
-	PrivValidatorKey string `mapstructure:"priv_validator_key_file"`
+	PrivValidatorKey string `toml:"priv_validator_key_file" mapstructure:"priv_validator_key_file"`
 
 	// Path to the JSON file containing the last sign state of a validator
-	PrivValidatorState string `mapstructure:"priv_validator_state_file"`
+	PrivValidatorState string `toml:"priv_validator_state_file" mapstructure:"priv_validator_state_file"`
 
 	// TCP or UNIX socket address for Tendermint to listen on for
 	// connections from an external PrivValidator process
-	PrivValidatorListenAddr string `mapstructure:"priv_validator_laddr"`
+	PrivValidatorListenAddr string `toml:"priv_validator_laddr" mapstructure:"priv_validator_laddr"`
 
 	// A JSON file containing the private key to use for p2p authenticated encryption
-	NodeKey string `mapstructure:"node_key_file"`
+	NodeKey string `toml:"node_key_file" mapstructure:"node_key_file"`
 
 	// Mechanism to connect to the ABCI application: socket | grpc
-	ABCI string `mapstructure:"abci"`
+	ABCI string `toml:"abci" mapstructure:"abci"`
 
 	// TCP or UNIX socket address for the profiling server to listen on
-	ProfListenAddress string `mapstructure:"prof_laddr"`
+	ProfListenAddress string `toml:"prof_laddr" mapstructure:"prof_laddr"`
 
 	// If true, query the ABCI app on connecting to a new peer
 	// so the app can decide if we should keep the connection or not
-	FilterPeers bool `mapstructure:"filter_peers"` // false
+	FilterPeers bool `toml:"filter_peers" mapstructure:"filter_peers"` // false
 }
 
 // DefaultBaseConfig returns a default base configuration for a Tendermint node
@@ -284,36 +293,36 @@ func DefaultPackageLogLevels() string {
 
 // RPCConfig defines the configuration options for the Tendermint RPC server
 type RPCConfig struct {
-	RootDir string `mapstructure:"home"`
+	RootDir string `toml:"home" mapstructure:"home"`
 
 	// TCP or UNIX socket address for the RPC server to listen on
-	ListenAddress string `mapstructure:"laddr"`
+	ListenAddress string `toml:"laddr" mapstructure:"laddr"`
 
 	// A list of origins a cross-domain request can be executed from.
 	// If the special '*' value is present in the list, all origins will be allowed.
 	// An origin may contain a wildcard (*) to replace 0 or more characters (i.e.: http://*.domain.com).
 	// Only one wildcard can be used per origin.
-	CORSAllowedOrigins []string `mapstructure:"cors_allowed_origins"`
+	CORSAllowedOrigins []string `toml:"cors_allowed_origins" mapstructure:"cors_allowed_origins"`
 
 	// A list of methods the client is allowed to use with cross-domain requests.
-	CORSAllowedMethods []string `mapstructure:"cors_allowed_methods"`
+	CORSAllowedMethods []string `toml:"cors_allowed_methods" mapstructure:"cors_allowed_methods"`
 
 	// A list of non simple headers the client is allowed to use with cross-domain requests.
-	CORSAllowedHeaders []string `mapstructure:"cors_allowed_headers"`
+	CORSAllowedHeaders []string `toml:"cors_allowed_headers" mapstructure:"cors_allowed_headers"`
 
 	// TCP or UNIX socket address for the gRPC server to listen on
 	// NOTE: This server only supports /broadcast_tx_commit
-	GRPCListenAddress string `mapstructure:"grpc_laddr"`
+	GRPCListenAddress string `toml:"grpc_laddr" mapstructure:"grpc_laddr"`
 
 	// Maximum number of simultaneous connections.
 	// Does not include RPC (HTTP&WebSocket) connections. See max_open_connections
 	// If you want to accept a larger number than the default, make sure
 	// you increase your OS limits.
 	// 0 - unlimited.
-	GRPCMaxOpenConnections int `mapstructure:"grpc_max_open_connections"`
+	GRPCMaxOpenConnections int `toml:"grpc_max_open_connections" mapstructure:"grpc_max_open_connections"`
 
 	// Activate unsafe RPC commands like /dial_persistent_peers and /unsafe_flush_mempool
-	Unsafe bool `mapstructure:"unsafe"`
+	Unsafe bool `toml:"unsafe" mapstructure:"unsafe"`
 
 	// Maximum number of simultaneous connections (including WebSocket).
 	// Does not include gRPC connections. See grpc_max_open_connections
@@ -322,7 +331,7 @@ type RPCConfig struct {
 	// 0 - unlimited.
 	// Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
 	// 1024 - 40 - 10 - 50 = 924 = ~900
-	MaxOpenConnections int `mapstructure:"max_open_connections"`
+	MaxOpenConnections int `toml:"max_open_connections" mapstructure:"max_open_connections"`
 }
 
 // DefaultRPCConfig returns a default configuration for the RPC server
@@ -371,64 +380,64 @@ func (cfg *RPCConfig) IsCorsEnabled() bool {
 
 // P2PConfig defines the configuration options for the Tendermint peer-to-peer networking layer
 type P2PConfig struct {
-	RootDir string `mapstructure:"home"`
+	RootDir string `toml:"home" mapstructure:"home"`
 
 	// Address to listen for incoming connections
-	ListenAddress string `mapstructure:"laddr"`
+	ListenAddress string `toml:"laddr" mapstructure:"laddr"`
 
 	// Address to advertise to peers for them to dial
-	ExternalAddress string `mapstructure:"external_address"`
+	ExternalAddress string `toml:"external_address" mapstructure:"external_address"`
 
 	// Comma separated list of seed nodes to connect to
 	// We only use these if we can’t connect to peers in the addrbook
-	Seeds string `mapstructure:"seeds"`
+	Seeds string `toml:"seeds" mapstructure:"seeds"`
 
 	// Comma separated list of nodes to keep persistent connections to
-	PersistentPeers string `mapstructure:"persistent_peers"`
+	PersistentPeers string `toml:"persistent_peers" mapstructure:"persistent_peers"`
 
 	// UPNP port forwarding
-	UPNP bool `mapstructure:"upnp"`
+	UPNP bool `toml:"upnp" mapstructure:"upnp"`
 
 	// Path to address book
-	AddrBook string `mapstructure:"addr_book_file"`
+	AddrBook string `toml:"addr_book_file" mapstructure:"addr_book_file"`
 
 	// Set true for strict address routability rules
 	// Set false for private or local networks
-	AddrBookStrict bool `mapstructure:"addr_book_strict"`
+	AddrBookStrict bool `toml:"addr_book_strict" mapstructure:"addr_book_strict"`
 
 	// Maximum number of inbound peers
-	MaxNumInboundPeers int `mapstructure:"max_num_inbound_peers"`
+	MaxNumInboundPeers int `toml:"max_num_inbound_peers" mapstructure:"max_num_inbound_peers"`
 
 	// Maximum number of outbound peers to connect to, excluding persistent peers
-	MaxNumOutboundPeers int `mapstructure:"max_num_outbound_peers"`
+	MaxNumOutboundPeers int `toml:"max_num_outbound_peers" mapstructure:"max_num_outbound_peers"`
 
 	// Time to wait before flushing messages out on the connection
 	FlushThrottleTimeout time.Duration `mapstructure:"flush_throttle_timeout"`
 
 	// Maximum size of a message packet payload, in bytes
-	MaxPacketMsgPayloadSize int `mapstructure:"max_packet_msg_payload_size"`
+	MaxPacketMsgPayloadSize int `toml:"max_packet_msg_payload_size" mapstructure:"max_packet_msg_payload_size"`
 
 	// Rate at which packets can be sent, in bytes/second
-	SendRate int64 `mapstructure:"send_rate"`
+	SendRate int64 `toml:"send_rate" mapstructure:"send_rate"`
 
 	// Rate at which packets can be received, in bytes/second
-	RecvRate int64 `mapstructure:"recv_rate"`
+	RecvRate int64 `toml:"recv_rate" mapstructure:"recv_rate"`
 
 	// Set true to enable the peer-exchange reactor
-	PexReactor bool `mapstructure:"pex"`
+	PexReactor bool `toml:"pex" mapstructure:"pex"`
 
 	// Seed mode, in which node constantly crawls the network and looks for
 	// peers. If another node asks it for addresses, it responds and disconnects.
 	//
 	// Does not work if the peer-exchange reactor is disabled.
-	SeedMode bool `mapstructure:"seed_mode"`
+	SeedMode bool `toml:"seed_mode" mapstructure:"seed_mode"`
 
 	// Comma separated list of peer IDs to keep private (will not be gossiped to
 	// other peers)
-	PrivatePeerIDs string `mapstructure:"private_peer_ids"`
+	PrivatePeerIDs string `toml:"private_peer_ids" mapstructure:"private_peer_ids"`
 
 	// Toggle to disable guard against peers connecting from the same ip.
-	AllowDuplicateIP bool `mapstructure:"allow_duplicate_ip"`
+	AllowDuplicateIP bool `toml:"allow_duplicate_ip" mapstructure:"allow_duplicate_ip"`
 
 	// Peer connection configuration.
 	HandshakeTimeout time.Duration `mapstructure:"handshake_timeout"`
@@ -436,10 +445,10 @@ type P2PConfig struct {
 
 	// Testing params.
 	// Force dial to fail
-	TestDialFail bool `mapstructure:"test_dial_fail"`
+	TestDialFail bool `toml:"test_dial_fail" mapstructure:"test_dial_fail"`
 	// FUzz connection
-	TestFuzz       bool            `mapstructure:"test_fuzz"`
-	TestFuzzConfig *FuzzConnConfig `mapstructure:"test_fuzz_config"`
+	TestFuzz       bool            `toml:"test_fuzz" mapstructure:"test_fuzz"`
+	TestFuzzConfig *FuzzConnConfig `toml:"test_fuzz_config" mapstructure:"test_fuzz_config"`
 }
 
 // DefaultP2PConfig returns a default configuration for the peer-to-peer layer
@@ -530,12 +539,12 @@ func DefaultFuzzConnConfig() *FuzzConnConfig {
 
 // MempoolConfig defines the configuration options for the Tendermint mempool
 type MempoolConfig struct {
-	RootDir   string `mapstructure:"home"`
-	Recheck   bool   `mapstructure:"recheck"`
-	Broadcast bool   `mapstructure:"broadcast"`
-	WalPath   string `mapstructure:"wal_dir"`
-	Size      int    `mapstructure:"size"`
-	CacheSize int    `mapstructure:"cache_size"`
+	RootDir   string `toml:"home" mapstructure:"home"`
+	Recheck   bool   `toml:"recheck" mapstructure:"recheck"`
+	Broadcast bool   `toml:"broadcast" mapstructure:"broadcast"`
+	WalPath   string `toml:"wal_dir" mapstructure:"wal_dir"`
+	Size      int    `toml:"size" mapstructure:"size"`
+	CacheSize int    `toml:"cache_size" mapstructure:"cache_size"`
 }
 
 // DefaultMempoolConfig returns a default configuration for the Tendermint mempool
@@ -586,8 +595,8 @@ func (cfg *MempoolConfig) ValidateBasic() error {
 // ConsensusConfig defines the configuration for the Tendermint consensus service,
 // including timeouts and details about the WAL and the block structure.
 type ConsensusConfig struct {
-	RootDir string `mapstructure:"home"`
-	WalPath string `mapstructure:"wal_file"`
+	RootDir string `toml:"home" mapstructure:"home"`
+	WalPath string `toml:"wal_file" mapstructure:"wal_file"`
 	walFile string // overrides WalPath if set
 
 	TimeoutPropose        time.Duration `mapstructure:"timeout_propose"`
@@ -599,10 +608,10 @@ type ConsensusConfig struct {
 	TimeoutCommit         time.Duration `mapstructure:"timeout_commit"`
 
 	// Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
-	SkipTimeoutCommit bool `mapstructure:"skip_timeout_commit"`
+	SkipTimeoutCommit bool `toml:"skip_timeout_commit" mapstructure:"skip_timeout_commit"`
 
 	// EmptyBlocks mode and possible interval between empty blocks
-	CreateEmptyBlocks         bool          `mapstructure:"create_empty_blocks"`
+	CreateEmptyBlocks         bool          `toml:"create_empty_blocks" mapstructure:"create_empty_blocks"`
 	CreateEmptyBlocksInterval time.Duration `mapstructure:"create_empty_blocks_interval"`
 
 	// Reactor sleep duration parameters
@@ -792,19 +801,19 @@ type InstrumentationConfig struct {
 	// When true, Prometheus metrics are served under /metrics on
 	// PrometheusListenAddr.
 	// Check out the documentation for the list of available metrics.
-	Prometheus bool `mapstructure:"prometheus"`
+	Prometheus bool `toml:"prometheus" mapstructure:"prometheus"`
 
 	// Address to listen for Prometheus collector(s) connections.
-	PrometheusListenAddr string `mapstructure:"prometheus_listen_addr"`
+	PrometheusListenAddr string `toml:"prometheus_listen_addr" mapstructure:"prometheus_listen_addr"`
 
 	// Maximum number of simultaneous connections.
 	// If you want to accept a larger number than the default, make sure
 	// you increase your OS limits.
 	// 0 - unlimited.
-	MaxOpenConnections int `mapstructure:"max_open_connections"`
+	MaxOpenConnections int `toml:"max_open_connections" mapstructure:"max_open_connections"`
 
 	// Instrumentation namespace.
-	Namespace string `mapstructure:"namespace"`
+	Namespace string `toml:"namespace" mapstructure:"namespace"`
 }
 
 // DefaultInstrumentationConfig returns a default configuration for metrics
