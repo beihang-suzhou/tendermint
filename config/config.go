@@ -412,7 +412,7 @@ type P2PConfig struct {
 	MaxNumOutboundPeers int `toml:"max_num_outbound_peers" mapstructure:"max_num_outbound_peers"`
 
 	// Time to wait before flushing messages out on the connection
-	FlushThrottleTimeout time.Duration `mapstructure:"flush_throttle_timeout"`
+	FlushThrottleTimeout time.Duration `toml.Unmarshal:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`
 
 	// Maximum size of a message packet payload, in bytes
 	MaxPacketMsgPayloadSize int `toml:"max_packet_msg_payload_size" mapstructure:"max_packet_msg_payload_size"`
