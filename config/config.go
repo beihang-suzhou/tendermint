@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/BurntSushi/toml"
-	"github.com/davecgh/go-spew/spew"
+	"io/ioutil"
 )
 
 const (
@@ -82,12 +82,24 @@ func DefaultConfig() *Config {
 	//	TxIndex:         DefaultTxIndexConfig(),
 	//	Instrumentation: DefaultInstrumentationConfig(),
 	//}
+
+    //方法1
 	var conf *Config
+	file,_:=os.Open("m.toml")
+	buf,_:=ioutil.ReadAll(file)
+	err :=toml.Unmarshal(buf,&conf)
+	if err != nil {
+	fmt. Println ( "error:" , err )
+	}
+
+	//方法2
+	/*var conf *Config
 	conf = new(Config)
 	if _, err := toml.DecodeFile("m.toml", conf); err != nil {
 		panic(err)
 	}
-	spew.Dump(conf)
+	spew.Dump(conf)*/
+
 	return conf
 }
 
@@ -412,7 +424,7 @@ type P2PConfig struct {
 	MaxNumOutboundPeers int `toml:"max_num_outbound_peers" mapstructure:"max_num_outbound_peers"`
 
 	// Time to wait before flushing messages out on the connection
-	FlushThrottleTimeout time.Duration `toml.Unmarshal:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`
+	FlushThrottleTimeout time.Duration `toml.marshal:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`
 
 	// Maximum size of a message packet payload, in bytes
 	MaxPacketMsgPayloadSize int `toml:"max_packet_msg_payload_size" mapstructure:"max_packet_msg_payload_size"`
