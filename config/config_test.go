@@ -26,7 +26,7 @@ func TestDefaultConfig(t *testing.T) {
 	fmt.Println("+++++++++++ P2P ++++++++++++++")
 	fmt.Println(cfg.P2P.MaxPacketMsgPayloadSize)
 	fmt.Println(cfg.P2P.TestFuzzConfig)
-	fmt.Println(cfg.P2P.FlushThrottleTimeout)
+	fmt.Println("这里为Duration类型： ",cfg.P2P.FlushThrottleTimeout)
 	fmt.Println("+++++++++++ MempoolConfig ++++++++++++++")
 	fmt.Println(cfg.Mempool.Recheck)
 	fmt.Println("+++++++++++ ConsensusConfig ++++++++++++++")
