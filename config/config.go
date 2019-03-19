@@ -88,6 +88,7 @@ func DefaultConfig() *Config {
 	err :=toml.Unmarshal(buf,&conf)
 	if err != nil {
 	fmt. Println ( "error:" , err )
+	return Config
 	}*/
 
 	//方法2
@@ -96,9 +97,11 @@ func DefaultConfig() *Config {
 	if _, err := toml.DecodeFile("m.toml", conf); err != nil {
 		panic(err)
 	}
-	spew.Dump(conf)*/
+	spew.Dump(conf)
+	return Config
+	*/
 
-	return conf
+
 }
 
 // TestConfig returns a configuration that can be used for testing
