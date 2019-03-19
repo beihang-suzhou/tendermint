@@ -23,6 +23,7 @@ func TestDefaultConfig(t *testing.T) {
 	fmt.Println(cfg.BaseConfig.FilterPeers)
 	fmt.Println("---------- RPCConfig ----------")
 	fmt.Println(cfg.RPC.CORSAllowedHeaders)
+	fmt.Println(cfg.RPC.ListenAddress)
 	fmt.Println("---------- P2P ----------")
 	fmt.Println(cfg.P2P.MaxPacketMsgPayloadSize)
 	fmt.Println(cfg.P2P.TestFuzzConfig)

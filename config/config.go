@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/BurntSushi/toml"
-	"io/ioutil"
 )
 
 const (
@@ -73,24 +71,24 @@ type Config struct {
 
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
-	//return &Config{
-	//	BaseConfig:      DefaultBaseConfig(),
-	//	RPC:             DefaultRPCConfig(),
-	//	P2P:             DefaultP2PConfig(),
-	//	Mempool:         DefaultMempoolConfig(),
-	//	Consensus:       DefaultConsensusConfig(),
-	//	TxIndex:         DefaultTxIndexConfig(),
-	//	Instrumentation: DefaultInstrumentationConfig(),
-	//}
+	return &Config{
+		BaseConfig:      DefaultBaseConfig(),
+		RPC:             DefaultRPCConfig(),
+		P2P:             DefaultP2PConfig(),
+		Mempool:         DefaultMempoolConfig(),
+		Consensus:       DefaultConsensusConfig(),
+		TxIndex:         DefaultTxIndexConfig(),
+		Instrumentation: DefaultInstrumentationConfig(),
+	}
 
     //方法1
-	var conf *Config
+	/*var conf *Config
 	file,_:=os.Open("m.toml")
 	buf,_:=ioutil.ReadAll(file)
 	err :=toml.Unmarshal(buf,&conf)
 	if err != nil {
 	fmt. Println ( "error:" , err )
-	}
+	}*/
 
 	//方法2
 	/*var conf *Config
