@@ -2,10 +2,9 @@ package config
 
 import (
 	"testing"
-	"time"
-
 	"github.com/stretchr/testify/assert"
 	"fmt"
+	"time"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -32,6 +31,11 @@ func TestDefaultConfig(t *testing.T) {
 	fmt.Println(cfg.Mempool.Recheck)
 	fmt.Println("---------- ConsensusConfig ----------")
 	fmt.Println(cfg.Consensus.CreateEmptyBlocks)
+	fmt.Println(cfg.Consensus.CreateEmptyBlocksInterval)
+	fmt.Println(cfg.Consensus.SkipTimeoutCommit)
+	fmt.Println(cfg.Consensus.TimeoutPrevoteDelta)
+	fmt.Println(cfg.Consensus.PeerGossipSleepDuration)
+	fmt.Println(cfg.Consensus.TimeoutPrecommit)
 	fmt.Println("---------- InstrumentationConfig ----------")
 	fmt.Println(cfg.Instrumentation.PrometheusListenAddr)
 	fmt.Println("---------- 结束 ----------")
