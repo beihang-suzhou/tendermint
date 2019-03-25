@@ -1,13 +1,11 @@
-package config
+package tomlconfig
 
 import (
-	"bytes"
-	"path/filepath"
+
 	"text/template"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
-	"io/ioutil"
-	"fmt"
+
+
 )
 
 // DefaultDirPerm is the default permissions used when creating directories.
@@ -26,7 +24,7 @@ func init() {
 
 // EnsureRoot creates the root, config, and data directories if they don't exist,
 // and panics if it fails.
-func EnsureRoot(rootDir string) {
+/*func EnsureRoot(rootDir string) {
 	if err := cmn.EnsureDir(rootDir, DefaultDirPerm); err != nil {
 		cmn.PanicSanity(err.Error())
 	}
@@ -43,16 +41,16 @@ func EnsureRoot(rootDir string) {
 	if !cmn.FileExists(configFilePath) {
 		writeDefaultConfigFile(configFilePath)
 	}
-}
+}*/
 
 // XXX: this func should probably be called by cmd/tendermint/commands/init.go
 // alongside the writing of the genesis.json and priv_validator.json
-func writeDefaultConfigFile(configFilePath string) {
-	WriteConfigFile(configFilePath, DefaultConfig())
-}
+/*func writeDefaultConfigFile(configFilePath string) {
+	WriteConfigFile(configFilePath, TomlDefaultConfig())
+}*/
 
 // WriteConfigFile renders config using the template and writes it to configFilePath.
-func WriteConfigFile(configFilePath string, config *Config) {
+/*func WriteConfigFile(configFilePath string, config *Config) {
 	var buffer bytes.Buffer
 
 	if err := configTemplate.Execute(&buffer, config); err != nil {
@@ -60,7 +58,7 @@ func WriteConfigFile(configFilePath string, config *Config) {
 	}
 
 	cmn.MustWriteFile(configFilePath, buffer.Bytes(), 0644)
-}
+}*/
 
 // Note: any changes to the comments/variables/mapstructure
 // must be reflected in the appropriate struct in config/tomlconfig.go
@@ -320,48 +318,48 @@ namespace = "{{ .Instrumentation.Namespace }}"
 
 /****** these are for test settings ***********/
 //改为toml方式读取时，此处需要注释掉
-func ResetTestRoot(testName string) *Config {
-	return ResetTestRootWithChainID(testName, "")
-}
+//func ResetTestRoot(testName string) *Config {
+//	return ResetTestRootWithChainID(testName, "")
+//}
 
-func ResetTestRootWithChainID(testName string, chainID string) *Config {
-	// create a unique, concurrency-safe test directory under os.TempDir()
-	rootDir, err := ioutil.TempDir("", fmt.Sprintf("%s-%s_", chainID, testName))
-	if err != nil {
-		panic(err)
-	}
-	// ensure config and data subdirs are created
-	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultConfigDir), DefaultDirPerm); err != nil {
-		panic(err)
-	}
-	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultDataDir), DefaultDirPerm); err != nil {
-		panic(err)
-	}
-
-	baseConfig := DefaultBaseConfig()
-	configFilePath := filepath.Join(rootDir, defaultConfigFilePath)
-	genesisFilePath := filepath.Join(rootDir, baseConfig.Genesis)
-	privKeyFilePath := filepath.Join(rootDir, baseConfig.PrivValidatorKey)
-	privStateFilePath := filepath.Join(rootDir, baseConfig.PrivValidatorState)
-
-	// Write default config file if missing.
-	if !cmn.FileExists(configFilePath) {
-		writeDefaultConfigFile(configFilePath)
-	}
-	if !cmn.FileExists(genesisFilePath) {
-		if chainID == "" {
-			chainID = "tendermint_test"
-		}
-		testGenesis := fmt.Sprintf(testGenesisFmt, chainID)
-		cmn.MustWriteFile(genesisFilePath, []byte(testGenesis), 0644)
-	}
-	// we always overwrite the priv val
-	cmn.MustWriteFile(privKeyFilePath, []byte(testPrivValidatorKey), 0644)
-	cmn.MustWriteFile(privStateFilePath, []byte(testPrivValidatorState), 0644)
-
-	config := TestConfig().SetRoot(rootDir)
-	return config
-}
+//func ResetTestRootWithChainID(testName string, chainID string) *Config {
+//	// create a unique, concurrency-safe test directory under os.TempDir()
+//	rootDir, err := ioutil.TempDir("", fmt.Sprintf("%s-%s_", chainID, testName))
+//	if err != nil {
+//		panic(err)
+//	}
+//	// ensure config and data subdirs are created
+//	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultConfigDir), DefaultDirPerm); err != nil {
+//		panic(err)
+//	}
+//	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultDataDir), DefaultDirPerm); err != nil {
+//		panic(err)
+//	}
+//
+//	baseConfig := DefaultBaseConfig()
+//	configFilePath := filepath.Join(rootDir, defaultConfigFilePath)
+//	genesisFilePath := filepath.Join(rootDir, baseConfig.Genesis)
+//	privKeyFilePath := filepath.Join(rootDir, baseConfig.PrivValidatorKey)
+//	privStateFilePath := filepath.Join(rootDir, baseConfig.PrivValidatorState)
+//
+//	// Write default config file if missing.
+//	if !cmn.FileExists(configFilePath) {
+//		writeDefaultConfigFile(configFilePath)
+//	}
+//	if !cmn.FileExists(genesisFilePath) {
+//		if chainID == "" {
+//			chainID = "tendermint_test"
+//		}
+//		testGenesis := fmt.Sprintf(testGenesisFmt, chainID)
+//		cmn.MustWriteFile(genesisFilePath, []byte(testGenesis), 0644)
+//	}
+//	// we always overwrite the priv val
+//	cmn.MustWriteFile(privKeyFilePath, []byte(testPrivValidatorKey), 0644)
+//	cmn.MustWriteFile(privStateFilePath, []byte(testPrivValidatorState), 0644)
+//
+//	config := TestConfig().SetRoot(rootDir)
+//	return config
+//}
 
 var testGenesisFmt = `{
   "genesis_time": "2018-10-10T08:20:13.695936996Z",

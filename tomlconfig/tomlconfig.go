@@ -1,4 +1,4 @@
-package config
+package tomlconfig
 
 import (
 	"fmt"
@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/BurntSushi/toml"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -56,7 +58,7 @@ var (
 )
 
 // Config defines the top level configuration for a Tendermint node
-type Config struct {
+type TomlConfig struct {
 	// Top level options use an anonymous struct
 	BaseConfig `mapstructure:",squash"`
 
@@ -70,8 +72,8 @@ type Config struct {
 }
 
 // DefaultConfig returns a default configuration for a Tendermint node
-func DefaultConfig() *Config {
-	return &Config{
+func TomlDefaultConfig(confpath string) *TomlConfig {
+	/*return &Config{
 		BaseConfig:      DefaultBaseConfig(),
 		RPC:             DefaultRPCConfig(),
 		P2P:             DefaultP2PConfig(),
@@ -79,11 +81,11 @@ func DefaultConfig() *Config {
 		Consensus:       DefaultConsensusConfig(),
 		TxIndex:         DefaultTxIndexConfig(),
 		Instrumentation: DefaultInstrumentationConfig(),
-	}
+	}*/
 
     //方法1
-	/*var conf *Config
-	file,_:=os.Open("mm.toml")
+	/*var conf *TomlConfig
+	file,_:=os.Open(confpath)
 	buf,_:=ioutil.ReadAll(file)
 	err :=toml.Unmarshal(buf,&conf)
 	if err != nil {
@@ -92,65 +94,62 @@ func DefaultConfig() *Config {
 	return conf*/
 
 	//方法2
-	/*var conf *Config
-	conf = new(Config)
-	if _, err := toml.DecodeFile("mm.toml", conf); err != nil {
+	var conf *TomlConfig
+	conf = new(TomlConfig)
+	if _, err := toml.DecodeFile(confpath, conf); err != nil {
 		panic(err)
 	}
 	spew.Dump(conf)
 	return conf
-	*/
-
-
 }
 //改为toml方式读取时，此处需要注释掉
 // TestConfig returns a configuration that can be used for testing
-func TestConfig() *Config {
-	return &Config{
-		BaseConfig:      TestBaseConfig(),
-		RPC:             TestRPCConfig(),
-		P2P:             TestP2PConfig(),
-		Mempool:         TestMempoolConfig(),
-		Consensus:       TestConsensusConfig(),
-		TxIndex:         TestTxIndexConfig(),
-		Instrumentation: TestInstrumentationConfig(),
-	}
-}
+//func TestConfig() *Config {
+//	return &Config{
+//		BaseConfig:      TestBaseConfig(),
+//		RPC:             TestRPCConfig(),
+//		P2P:             TestP2PConfig(),
+//		Mempool:         TestMempoolConfig(),
+//		Consensus:       TestConsensusConfig(),
+//		TxIndex:         TestTxIndexConfig(),
+//		Instrumentation: TestInstrumentationConfig(),
+//	}
+//}
 
 // SetRoot sets the RootDir for all Config structs
-func (cfg *Config) SetRoot(root string) *Config {
+/*func (cfg *Config) SetRoot(root string) *Config {
 	cfg.BaseConfig.RootDir = root
 	cfg.RPC.RootDir = root
 	cfg.P2P.RootDir = root
 	cfg.Mempool.RootDir = root
 	cfg.Consensus.RootDir = root
 	return cfg
-}
+}*/
 
 // ValidateBasic performs basic validation (checking param bounds, etc.) and
 // returns an error if any check fails.
 //改为toml方式读取时，此处需要注释掉
-func (cfg *Config) ValidateBasic() error {
-	if err := cfg.BaseConfig.ValidateBasic(); err != nil {
-		return err
-	}
-	if err := cfg.RPC.ValidateBasic(); err != nil {
-		return errors.Wrap(err, "Error in [rpc] section")
-	}
-	if err := cfg.P2P.ValidateBasic(); err != nil {
-		return errors.Wrap(err, "Error in [p2p] section")
-	}
-	if err := cfg.Mempool.ValidateBasic(); err != nil {
-		return errors.Wrap(err, "Error in [mempool] section")
-	}
-	if err := cfg.Consensus.ValidateBasic(); err != nil {
-		return errors.Wrap(err, "Error in [consensus] section")
-	}
-	return errors.Wrap(
-		cfg.Instrumentation.ValidateBasic(),
-		"Error in [instrumentation] section",
-	)
-}
+//func (cfg *Config) ValidateBasic() error {
+//	if err := cfg.BaseConfig.ValidateBasic(); err != nil {
+//		return err
+//	}
+//	if err := cfg.RPC.ValidateBasic(); err != nil {
+//		return errors.Wrap(err, "Error in [rpc] section")
+//	}
+//	if err := cfg.P2P.ValidateBasic(); err != nil {
+//		return errors.Wrap(err, "Error in [p2p] section")
+//	}
+//	if err := cfg.Mempool.ValidateBasic(); err != nil {
+//		return errors.Wrap(err, "Error in [mempool] section")
+//	}
+//	if err := cfg.Consensus.ValidateBasic(); err != nil {
+//		return errors.Wrap(err, "Error in [consensus] section")
+//	}
+//	return errors.Wrap(
+//		cfg.Instrumentation.ValidateBasic(),
+//		"Error in [instrumentation] section",
+//	)
+//}
 
 //-----------------------------------------------------------------------------
 // BaseConfig
@@ -214,10 +213,14 @@ type BaseConfig struct {
 	// so the app can decide if we should keep the connection or not
 	FilterPeers bool `toml:"filter_peers" mapstructure:"filter_peers"` // false
 
+
+	// peer group
+	// peer group
+	Group string `toml:"group" mapstructure:"group"`
 }
 
 // DefaultBaseConfig returns a default base configuration for a Tendermint node
-func DefaultBaseConfig() BaseConfig {
+/*func DefaultBaseConfig() BaseConfig {
 	return BaseConfig{
 		Genesis:            defaultGenesisJSONPath,
 		PrivValidatorKey:   defaultPrivValKeyPath,
@@ -234,17 +237,17 @@ func DefaultBaseConfig() BaseConfig {
 		DBBackend:          "leveldb",
 		DBPath:             "data",
 	}
-}
+}*/
 
 // TestBaseConfig returns a base configuration for testing a Tendermint node
-func TestBaseConfig() BaseConfig {
+/*func TestBaseConfig() BaseConfig {
 	cfg := DefaultBaseConfig()
 	cfg.chainID = "tendermint_test"
 	cfg.ProxyApp = "kvstore"
 	cfg.FastSync = false
 	cfg.DBBackend = "memdb"
 	return cfg
-}
+}*/
 
 func (cfg BaseConfig) ChainID() string {
 	return cfg.chainID
@@ -350,7 +353,7 @@ type RPCConfig struct {
 }
 
 // DefaultRPCConfig returns a default configuration for the RPC server
-func DefaultRPCConfig() *RPCConfig {
+/*func DefaultRPCConfig() *RPCConfig {
 	return &RPCConfig{
 		ListenAddress:          "tcp://0.0.0.0:26657",
 		CORSAllowedOrigins:     []string{},
@@ -362,16 +365,16 @@ func DefaultRPCConfig() *RPCConfig {
 		Unsafe:             false,
 		MaxOpenConnections: 900,
 	}
-}
+}*/
 
 // TestRPCConfig returns a configuration for testing the RPC server
-func TestRPCConfig() *RPCConfig {
+/*func TestRPCConfig() *RPCConfig {
 	cfg := DefaultRPCConfig()
 	cfg.ListenAddress = "tcp://0.0.0.0:36657"
 	cfg.GRPCListenAddress = "tcp://0.0.0.0:36658"
 	cfg.Unsafe = true
 	return cfg
-}
+}*/
 
 // ValidateBasic performs basic validation (checking param bounds, etc.) and
 // returns an error if any check fails.
@@ -434,8 +437,8 @@ type P2PConfig struct {
 	MaxNumOutboundPeers int `toml:"max_num_outbound_peers" mapstructure:"max_num_outbound_peers"`
 
 	// Time to wait before flushing messages out on the connection
-	FlushThrottleTimeout time.Duration `toml:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`
-	//FlushThrottleTimeout duration `toml:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	//FlushThrottleTimeout time.Duration `toml:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`
+	FlushThrottleTimeout duration `toml:"flush_throttle_timeout" mapstructure:"flush_throttle_timeout"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
 
 	// Maximum size of a message packet payload, in bytes
 	MaxPacketMsgPayloadSize int `toml:"max_packet_msg_payload_size" mapstructure:"max_packet_msg_payload_size"`
@@ -463,12 +466,12 @@ type P2PConfig struct {
 	AllowDuplicateIP bool `toml:"allow_duplicate_ip" mapstructure:"allow_duplicate_ip"`
 
 	// Peer connection configuration.
-	HandshakeTimeout time.Duration `mapstructure:"handshake_timeout"`
-	DialTimeout      time.Duration `mapstructure:"dial_timeout"`
+	//HandshakeTimeout time.Duration `mapstructure:"handshake_timeout"`
+	//DialTimeout      time.Duration `mapstructure:"dial_timeout"`
 
 	//toml方式解析duration
-	//HandshakeTimeout duration `toml:"handshake_timeout" mapstructure:"handshake_timeout"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//DialTimeout      duration `toml:"dial_timeout" mapstructure:"dial_timeout"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	HandshakeTimeout duration `toml:"handshake_timeout" mapstructure:"handshake_timeout"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	DialTimeout      duration `toml:"dial_timeout" mapstructure:"dial_timeout"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
 
 	// Testing params.
 	// Force dial to fail
@@ -480,7 +483,7 @@ type P2PConfig struct {
 
 // DefaultP2PConfig returns a default configuration for the peer-to-peer layer
 //改为toml方式读取时，此处需要注释掉
-func DefaultP2PConfig() *P2PConfig {
+/*func DefaultP2PConfig() *P2PConfig {
 	return &P2PConfig{
 		ListenAddress:           "tcp://0.0.0.0:26656",
 		ExternalAddress:         "",
@@ -502,17 +505,17 @@ func DefaultP2PConfig() *P2PConfig {
 		TestFuzz:                false,
 		TestFuzzConfig:          DefaultFuzzConnConfig(),
 	}
-}
+}*/
 
 // TestP2PConfig returns a configuration for testing the peer-to-peer layer
 //改为toml方式读取时，此处需要注释掉
-func TestP2PConfig() *P2PConfig {
+/*func TestP2PConfig() *P2PConfig {
 	cfg := DefaultP2PConfig()
 	cfg.ListenAddress = "tcp://0.0.0.0:36656"
 	cfg.FlushThrottleTimeout = 10 * time.Millisecond
 	cfg.AllowDuplicateIP = true
 	return cfg
-}
+}*/
 
 // AddrBookFile returns the full path to the address book
 func (cfg *P2PConfig) AddrBookFile() string {
@@ -522,27 +525,27 @@ func (cfg *P2PConfig) AddrBookFile() string {
 // ValidateBasic performs basic validation (checking param bounds, etc.) and
 // returns an error if any check fails.
 //改为toml方式读取时，此处需要注释掉
-func (cfg *P2PConfig) ValidateBasic() error {
-	if cfg.MaxNumInboundPeers < 0 {
-		return errors.New("max_num_inbound_peers can't be negative")
-	}
-	if cfg.MaxNumOutboundPeers < 0 {
-		return errors.New("max_num_outbound_peers can't be negative")
-	}
-	if cfg.FlushThrottleTimeout < 0 {
-		return errors.New("flush_throttle_timeout can't be negative")
-	}
-	if cfg.MaxPacketMsgPayloadSize < 0 {
-		return errors.New("max_packet_msg_payload_size can't be negative")
-	}
-	if cfg.SendRate < 0 {
-		return errors.New("send_rate can't be negative")
-	}
-	if cfg.RecvRate < 0 {
-		return errors.New("recv_rate can't be negative")
-	}
-	return nil
-}
+//func (cfg *P2PConfig) ValidateBasic() error {
+//	if cfg.MaxNumInboundPeers < 0 {
+//		return errors.New("max_num_inbound_peers can't be negative")
+//	}
+//	if cfg.MaxNumOutboundPeers < 0 {
+//		return errors.New("max_num_outbound_peers can't be negative")
+//	}
+//	if cfg.FlushThrottleTimeout < 0 {
+//		return errors.New("flush_throttle_timeout can't be negative")
+//	}
+//	if cfg.MaxPacketMsgPayloadSize < 0 {
+//		return errors.New("max_packet_msg_payload_size can't be negative")
+//	}
+//	if cfg.SendRate < 0 {
+//		return errors.New("send_rate can't be negative")
+//	}
+//	if cfg.RecvRate < 0 {
+//		return errors.New("recv_rate can't be negative")
+//	}
+//	return nil
+//}
 
 // FuzzConnConfig is a FuzzedConnection configuration.
 type FuzzConnConfig struct {
@@ -554,7 +557,7 @@ type FuzzConnConfig struct {
 }
 
 // DefaultFuzzConnConfig returns the default config.
-func DefaultFuzzConnConfig() *FuzzConnConfig {
+/*func DefaultFuzzConnConfig() *FuzzConnConfig {
 	return &FuzzConnConfig{
 		Mode:         FuzzModeDrop,
 		MaxDelay:     3 * time.Second,
@@ -562,7 +565,7 @@ func DefaultFuzzConnConfig() *FuzzConnConfig {
 		ProbDropConn: 0.00,
 		ProbSleep:    0.00,
 	}
-}
+}*/
 
 //-----------------------------------------------------------------------------
 // MempoolConfig
@@ -578,7 +581,7 @@ type MempoolConfig struct {
 }
 
 // DefaultMempoolConfig returns a default configuration for the Tendermint mempool
-func DefaultMempoolConfig() *MempoolConfig {
+/*func DefaultMempoolConfig() *MempoolConfig {
 	return &MempoolConfig{
 		Recheck:   true,
 		Broadcast: true,
@@ -588,28 +591,28 @@ func DefaultMempoolConfig() *MempoolConfig {
 		Size:      5000,
 		CacheSize: 10000,
 	}
-}
+}*/
 
 // TestMempoolConfig returns a configuration for testing the Tendermint mempool
-func TestMempoolConfig() *MempoolConfig {
+/*func TestMempoolConfig() *MempoolConfig {
 	cfg := DefaultMempoolConfig()
 	cfg.CacheSize = 1000
 	return cfg
-}
+}*/
 
 // WalDir returns the full path to the mempool's write-ahead log
-func (cfg *MempoolConfig) WalDir() string {
+/*func (cfg *MempoolConfig) WalDir() string {
 	return rootify(cfg.WalPath, cfg.RootDir)
-}
+}*/
 
 // WalEnabled returns true if the WAL is enabled.
-func (cfg *MempoolConfig) WalEnabled() bool {
+/*func (cfg *MempoolConfig) WalEnabled() bool {
 	return cfg.WalPath != ""
-}
+}*/
 
 // ValidateBasic performs basic validation (checking param bounds, etc.) and
 // returns an error if any check fails.
-func (cfg *MempoolConfig) ValidateBasic() error {
+/*func (cfg *MempoolConfig) ValidateBasic() error {
 	if cfg.Size < 0 {
 		return errors.New("size can't be negative")
 	}
@@ -617,7 +620,7 @@ func (cfg *MempoolConfig) ValidateBasic() error {
 		return errors.New("cache_size can't be negative")
 	}
 	return nil
-}
+}*/
 
 //-----------------------------------------------------------------------------
 // ConsensusConfig
@@ -629,36 +632,36 @@ type ConsensusConfig struct {
 	WalPath string `toml:"wal_file" mapstructure:"wal_file"`
 	walFile string // overrides WalPath if set
 	//默认方式解析time.Duration
-	TimeoutPropose        time.Duration `mapstructure:"timeout_propose"`
-	TimeoutProposeDelta   time.Duration `mapstructure:"timeout_propose_delta"`
-	TimeoutPrevote        time.Duration `mapstructure:"timeout_prevote"`
-	TimeoutPrevoteDelta   time.Duration `mapstructure:"timeout_prevote_delta"`
-	TimeoutPrecommit      time.Duration `mapstructure:"timeout_precommit"`
-	TimeoutPrecommitDelta time.Duration `mapstructure:"timeout_precommit_delta"`
-	TimeoutCommit         time.Duration `mapstructure:"timeout_commit"`
+	//TimeoutPropose        time.Duration `mapstructure:"timeout_propose"`
+	//TimeoutProposeDelta   time.Duration `mapstructure:"timeout_propose_delta"`
+	//TimeoutPrevote        time.Duration `mapstructure:"timeout_prevote"`
+	//TimeoutPrevoteDelta   time.Duration `mapstructure:"timeout_prevote_delta"`
+	//TimeoutPrecommit      time.Duration `mapstructure:"timeout_precommit"`
+	//TimeoutPrecommitDelta time.Duration `mapstructure:"timeout_precommit_delta"`
+	//TimeoutCommit         time.Duration `mapstructure:"timeout_commit"`
 	//默认方式解析time.Duration
-	CreateEmptyBlocksInterval time.Duration `mapstructure:"create_empty_blocks_interval"`
-	PeerGossipSleepDuration     time.Duration `mapstructure:"peer_gossip_sleep_duration"`
-	//Reactor sleep duration parameters
-	PeerQueryMaj23SleepDuration time.Duration `mapstructure:"peer_query_maj23_sleep_duration"`
-	//Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
-	BlockTimeIota time.Duration `mapstructure:"blocktime_iota"`
+	//CreateEmptyBlocksInterval time.Duration `mapstructure:"create_empty_blocks_interval"`
+	//PeerGossipSleepDuration     time.Duration `mapstructure:"peer_gossip_sleep_duration"`
+	////Reactor sleep duration parameters
+	//PeerQueryMaj23SleepDuration time.Duration `mapstructure:"peer_query_maj23_sleep_duration"`
+	////Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
+	//BlockTimeIota time.Duration `mapstructure:"blocktime_iota"`
 
 	//toml方式解析duration
-	//TimeoutPropose        duration `toml:"dial_timeout" mapstructure:"timeout_propose"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//TimeoutProposeDelta   duration `toml:"timeout_propose_delta" mapstructure:"timeout_propose_delta"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//TimeoutPrevote        duration `toml:"timeout_prevote" mapstructure:"timeout_prevote"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//TimeoutPrevoteDelta   duration `toml:"timeout_prevote_delta" mapstructure:"timeout_prevote_delta"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//TimeoutPrecommit      duration `toml:"timeout_precommit" mapstructure:"timeout_precommit"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//TimeoutPrecommitDelta duration `toml:"timeout_precommit_delta" mapstructure:"timeout_precommit_delta"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//TimeoutCommit         duration `toml:"timeout_commit" mapstructure:"timeout_commit"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutPropose        duration `toml:"dial_timeout" mapstructure:"timeout_propose"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutProposeDelta   duration `toml:"timeout_propose_delta" mapstructure:"timeout_propose_delta"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutPrevote        duration `toml:"timeout_prevote" mapstructure:"timeout_prevote"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutPrevoteDelta   duration `toml:"timeout_prevote_delta" mapstructure:"timeout_prevote_delta"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutPrecommit      duration `toml:"timeout_precommit" mapstructure:"timeout_precommit"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutPrecommitDelta duration `toml:"timeout_precommit_delta" mapstructure:"timeout_precommit_delta"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	TimeoutCommit         duration `toml:"timeout_commit" mapstructure:"timeout_commit"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
 	//toml方式解析duration
-	//CreateEmptyBlocksInterval duration `toml:"create_empty_blocks_interval" mapstructure:"create_empty_blocks_interval"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//// Reactor sleep duration parameters
-	//PeerGossipSleepDuration     duration `toml:"peer_gossip_sleep_duration" mapstructure:"peer_gossip_sleep_duration"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
-	//PeerQueryMaj23SleepDuration duration `toml:"peer_query_maj23_sleep_duration" mapstructure:"peer_query_maj23_sleep_duration"`
-	//// Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
-	//BlockTimeIota duration `toml:"blocktime_iota" mapstructure:"blocktime_iota"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	CreateEmptyBlocksInterval duration `toml:"create_empty_blocks_interval" mapstructure:"create_empty_blocks_interval"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	// Reactor sleep duration parameters
+	PeerGossipSleepDuration     duration `toml:"peer_gossip_sleep_duration" mapstructure:"peer_gossip_sleep_duration"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
+	PeerQueryMaj23SleepDuration duration `toml:"peer_query_maj23_sleep_duration" mapstructure:"peer_query_maj23_sleep_duration"`
+	// Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
+	BlockTimeIota duration `toml:"blocktime_iota" mapstructure:"blocktime_iota"`//改为toml方式，需要使用自定义小写duration类型，该类型实现了TextUnmarshaler接口
 
 	// Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 	SkipTimeoutCommit bool `toml:"skip_timeout_commit" mapstructure:"skip_timeout_commit"`
@@ -668,55 +671,55 @@ type ConsensusConfig struct {
 
 // DefaultConsensusConfig returns a default configuration for the consensus service
 //改为toml方式，此处需要注释掉
-func DefaultConsensusConfig() *ConsensusConfig {
-	return &ConsensusConfig{
-		WalPath:                     filepath.Join(defaultDataDir, "cs.wal", "wal"),
-		TimeoutPropose:              3000 * time.Millisecond,
-		TimeoutProposeDelta:         500 * time.Millisecond,
-		TimeoutPrevote:              1000 * time.Millisecond,
-		TimeoutPrevoteDelta:         500 * time.Millisecond,
-		TimeoutPrecommit:            1000 * time.Millisecond,
-		TimeoutPrecommitDelta:       500 * time.Millisecond,
-		TimeoutCommit:               1000 * time.Millisecond,
-		SkipTimeoutCommit:           false,
-		CreateEmptyBlocks:           true,
-		CreateEmptyBlocksInterval:   0 * time.Second,
-		PeerGossipSleepDuration:     100 * time.Millisecond,
-		PeerQueryMaj23SleepDuration: 2000 * time.Millisecond,
-		BlockTimeIota:               1000 * time.Millisecond,
-	}
-}
+//func DefaultConsensusConfig() *ConsensusConfig {
+//	return &ConsensusConfig{
+//		WalPath:                     filepath.Join(defaultDataDir, "cs.wal", "wal"),
+//		TimeoutPropose:              3000 * time.Millisecond,
+//		TimeoutProposeDelta:         500 * time.Millisecond,
+//		TimeoutPrevote:              1000 * time.Millisecond,
+//		TimeoutPrevoteDelta:         500 * time.Millisecond,
+//		TimeoutPrecommit:            1000 * time.Millisecond,
+//		TimeoutPrecommitDelta:       500 * time.Millisecond,
+//		TimeoutCommit:               1000 * time.Millisecond,
+//		SkipTimeoutCommit:           false,
+//		CreateEmptyBlocks:           true,
+//		CreateEmptyBlocksInterval:   0 * time.Second,
+//		PeerGossipSleepDuration:     100 * time.Millisecond,
+//		PeerQueryMaj23SleepDuration: 2000 * time.Millisecond,
+//		BlockTimeIota:               1000 * time.Millisecond,
+//	}
+//}
 
 // TestConsensusConfig returns a configuration for testing the consensus service
 //改为toml方式，此处需要注释掉
-func TestConsensusConfig() *ConsensusConfig {
-	cfg := DefaultConsensusConfig()
-	cfg.TimeoutPropose = 40 * time.Millisecond
-	cfg.TimeoutProposeDelta = 1 * time.Millisecond
-	cfg.TimeoutPrevote = 10 * time.Millisecond
-	cfg.TimeoutPrevoteDelta = 1 * time.Millisecond
-	cfg.TimeoutPrecommit = 10 * time.Millisecond
-	cfg.TimeoutPrecommitDelta = 1 * time.Millisecond
-	cfg.TimeoutCommit = 10 * time.Millisecond
-	cfg.SkipTimeoutCommit = true
-	cfg.PeerGossipSleepDuration = 5 * time.Millisecond
-	cfg.PeerQueryMaj23SleepDuration = 250 * time.Millisecond
-	cfg.BlockTimeIota = 10 * time.Millisecond
-	return cfg
-}
+//func TestConsensusConfig() *ConsensusConfig {
+//	cfg := DefaultConsensusConfig()
+//	cfg.TimeoutPropose = 40 * time.Millisecond
+//	cfg.TimeoutProposeDelta = 1 * time.Millisecond
+//	cfg.TimeoutPrevote = 10 * time.Millisecond
+//	cfg.TimeoutPrevoteDelta = 1 * time.Millisecond
+//	cfg.TimeoutPrecommit = 10 * time.Millisecond
+//	cfg.TimeoutPrecommitDelta = 1 * time.Millisecond
+//	cfg.TimeoutCommit = 10 * time.Millisecond
+//	cfg.SkipTimeoutCommit = true
+//	cfg.PeerGossipSleepDuration = 5 * time.Millisecond
+//	cfg.PeerQueryMaj23SleepDuration = 250 * time.Millisecond
+//	cfg.BlockTimeIota = 10 * time.Millisecond
+//	return cfg
+//}
 
 // MinValidVoteTime returns the minimum acceptable block time.
 // See the [BFT time spec](https://godoc.org/github.com/tendermint/tendermint/docs/spec/consensus/bft-time.md).
 //改为toml方式，此处需要注释掉
-func (cfg *ConsensusConfig) MinValidVoteTime(lastBlockTime time.Time) time.Time {
-	return lastBlockTime.Add(cfg.BlockTimeIota)
-}
+//func (cfg *ConsensusConfig) MinValidVoteTime(lastBlockTime time.Time) time.Time {
+//	return lastBlockTime.Add(cfg.BlockTimeIota)
+//}
 
 // WaitForTxs returns true if the consensus should wait for transactions before entering the propose step
 //改为toml方式，此处需要注释掉
-func (cfg *ConsensusConfig) WaitForTxs() bool {
-	return !cfg.CreateEmptyBlocks || cfg.CreateEmptyBlocksInterval > 0
-}
+//func (cfg *ConsensusConfig) WaitForTxs() bool {
+//	return !cfg.CreateEmptyBlocks || cfg.CreateEmptyBlocksInterval > 0
+//}
 
 // Propose returns the amount of time to wait for a proposal
 func (cfg *ConsensusConfig) Propose(round int) time.Duration {
@@ -741,9 +744,9 @@ func (cfg *ConsensusConfig) Precommit(round int) time.Duration {
 
 // Commit returns the amount of time to wait for straggler votes after receiving +2/3 precommits for a single block (ie. a commit).
 //改为toml方式，此处需要注释掉
-func (cfg *ConsensusConfig) Commit(t time.Time) time.Time {
-	return t.Add(cfg.TimeoutCommit)
-}
+//func (cfg *ConsensusConfig) Commit(t time.Time) time.Time {
+//	return t.Add(cfg.TimeoutCommit)
+//}
 
 // WalFile returns the full path to the write-ahead log file
 func (cfg *ConsensusConfig) WalFile() string {
@@ -761,42 +764,42 @@ func (cfg *ConsensusConfig) SetWalFile(walFile string) {
 // ValidateBasic performs basic validation (checking param bounds, etc.) and
 // returns an error if any check fails.
 //改为toml方式，此处需要注释掉
-func (cfg *ConsensusConfig) ValidateBasic() error {
-	if cfg.TimeoutPropose < 0 {
-		return errors.New("timeout_propose can't be negative")
-	}
-	if cfg.TimeoutProposeDelta < 0 {
-		return errors.New("timeout_propose_delta can't be negative")
-	}
-	if cfg.TimeoutPrevote < 0 {
-		return errors.New("timeout_prevote can't be negative")
-	}
-	if cfg.TimeoutPrevoteDelta < 0 {
-		return errors.New("timeout_prevote_delta can't be negative")
-	}
-	if cfg.TimeoutPrecommit < 0 {
-		return errors.New("timeout_precommit can't be negative")
-	}
-	if cfg.TimeoutPrecommitDelta < 0 {
-		return errors.New("timeout_precommit_delta can't be negative")
-	}
-	if cfg.TimeoutCommit < 0 {
-		return errors.New("timeout_commit can't be negative")
-	}
-	if cfg.CreateEmptyBlocksInterval < 0 {
-		return errors.New("create_empty_blocks_interval can't be negative")
-	}
-	if cfg.PeerGossipSleepDuration < 0 {
-		return errors.New("peer_gossip_sleep_duration can't be negative")
-	}
-	if cfg.PeerQueryMaj23SleepDuration < 0 {
-		return errors.New("peer_query_maj23_sleep_duration can't be negative")
-	}
-	if cfg.BlockTimeIota < 0 {
-		return errors.New("blocktime_iota can't be negative")
-	}
-	return nil
-}
+//func (cfg *ConsensusConfig) ValidateBasic() error {
+//	if cfg.TimeoutPropose < 0 {
+//		return errors.New("timeout_propose can't be negative")
+//	}
+//	if cfg.TimeoutProposeDelta < 0 {
+//		return errors.New("timeout_propose_delta can't be negative")
+//	}
+//	if cfg.TimeoutPrevote < 0 {
+//		return errors.New("timeout_prevote can't be negative")
+//	}
+//	if cfg.TimeoutPrevoteDelta < 0 {
+//		return errors.New("timeout_prevote_delta can't be negative")
+//	}
+//	if cfg.TimeoutPrecommit < 0 {
+//		return errors.New("timeout_precommit can't be negative")
+//	}
+//	if cfg.TimeoutPrecommitDelta < 0 {
+//		return errors.New("timeout_precommit_delta can't be negative")
+//	}
+//	if cfg.TimeoutCommit < 0 {
+//		return errors.New("timeout_commit can't be negative")
+//	}
+//	if cfg.CreateEmptyBlocksInterval < 0 {
+//		return errors.New("create_empty_blocks_interval can't be negative")
+//	}
+//	if cfg.PeerGossipSleepDuration < 0 {
+//		return errors.New("peer_gossip_sleep_duration can't be negative")
+//	}
+//	if cfg.PeerQueryMaj23SleepDuration < 0 {
+//		return errors.New("peer_query_maj23_sleep_duration can't be negative")
+//	}
+//	if cfg.BlockTimeIota < 0 {
+//		return errors.New("blocktime_iota can't be negative")
+//	}
+//	return nil
+//}
 
 //-----------------------------------------------------------------------------
 // TxIndexConfig
