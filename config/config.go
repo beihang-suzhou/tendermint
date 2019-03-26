@@ -83,7 +83,7 @@ func DefaultConfig() *Config {
 
     //方法1
 	/*var conf *Config
-	file,_:=os.Open("mm.toml")
+	file,_:=os.Open("tm.toml")
 	buf,_:=ioutil.ReadAll(file)
 	err :=toml.Unmarshal(buf,&conf)
 	if err != nil {
@@ -94,7 +94,7 @@ func DefaultConfig() *Config {
 	//方法2
 	/*var conf *Config
 	conf = new(Config)
-	if _, err := toml.DecodeFile("mm.toml", conf); err != nil {
+	if _, err := toml.DecodeFile("tm.toml", conf); err != nil {
 		panic(err)
 	}
 	spew.Dump(conf)

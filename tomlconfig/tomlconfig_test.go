@@ -8,7 +8,7 @@ import (
 func TestTomlDefaultConfig(t *testing.T) {
 
 	// set up some defaults
-	cfg := TomlDefaultConfig("G:/gopath/src/github.com/tendermint/tendermint/tomlconfig/mm.toml")
+	cfg := TomlDefaultConfig("G:/gopath/src/github.com/tendermint/tendermint/tomlconfig/tm.toml")
 	fmt.Println("---------- BaseConfig ----------")
 	//fmt.Println(cfg.BaseConfig.ProxyApp)
 	fmt.Println(cfg.BaseConfig.Moniker)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/BurntSushi/toml"
-	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -99,7 +98,7 @@ func TomlDefaultConfig(confpath string) *TomlConfig {
 	if _, err := toml.DecodeFile(confpath, conf); err != nil {
 		panic(err)
 	}
-	spew.Dump(conf)
+	//spew.Dump(conf)
 	return conf
 }
 //改为toml方式读取时，此处需要注释掉
