@@ -2,12 +2,12 @@ package config
 
 import (
 	"bytes"
-	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"text/template"
 
 	cmn "github.com/tendermint/tendermint/libs/common"
+	"io/ioutil"
+	"fmt"
 )
 
 // DefaultDirPerm is the default permissions used when creating directories.
@@ -63,7 +63,7 @@ func WriteConfigFile(configFilePath string, config *Config) {
 }
 
 // Note: any changes to the comments/variables/mapstructure
-// must be reflected in the appropriate struct in config/config.go
+// must be reflected in the appropriate struct in config/tomlconfig.go
 const defaultConfigTemplate = `# This is a TOML config file.
 # For more information, see https://github.com/toml-lang/toml
 
@@ -319,7 +319,7 @@ namespace = "{{ .Instrumentation.Namespace }}"
 `
 
 /****** these are for test settings ***********/
-
+//改为toml方式读取时，此处需要注释掉
 func ResetTestRoot(testName string) *Config {
 	return ResetTestRootWithChainID(testName, "")
 }

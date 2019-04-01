@@ -40,7 +40,7 @@ func TestEnsureRoot(t *testing.T) {
 
 	ensureFiles(t, tmpDir, "data")
 }
-
+//改为toml方式读取时，此处需要注释掉
 func TestEnsureTestRoot(t *testing.T) {
 	require := require.New(t)
 

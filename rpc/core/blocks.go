@@ -71,7 +71,8 @@ import (
 func BlockchainInfo(minHeight, maxHeight int64) (*ctypes.ResultBlockchainInfo, error) {
 
 	// maximum 20 block metas
-	const limit int64 = 20
+	// const limit int64 = 20
+	const limit int64 = 100
 	var err error
 	minHeight, maxHeight, err = filterMinMax(blockStore.Height(), minHeight, maxHeight, limit)
 	if err != nil {
