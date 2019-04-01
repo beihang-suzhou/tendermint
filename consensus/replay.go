@@ -288,7 +288,7 @@ func (h *Handshaker) ReplayBlocks(
 	if appBlockHeight == 0 {
 		validators := make([]*types.Validator, len(h.genDoc.Validators))
 		for i, val := range h.genDoc.Validators {
-			validators[i] = types.NewValidator(val.PubKey, val.Power)
+			validators[i] = types.NewValidator(val.PubKey, val.Power, val.Group)
 		}
 		validatorSet := types.NewValidatorSet(validators)
 		nextVals := types.TM2PB.ValidatorUpdates(validatorSet)
@@ -440,7 +440,9 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 	block := h.store.LoadBlock(height)
 	meta := h.store.LoadBlockMeta(height)
 
-	blockExec := sm.NewBlockExecutor(h.stateDB, h.logger, proxyApp, sm.MockMempool{}, sm.MockEvidencePool{})
+	mempools := make(map[int32]sm.Mempool)
+	mempools[0] = sm.MockMempool{}
+	blockExec := sm.NewBlockExecutor(h.stateDB, h.logger, proxyApp, mempools, sm.MockEvidencePool{})
 	blockExec.SetEventBus(h.eventBus)
 
 	var err error

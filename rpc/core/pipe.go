@@ -68,7 +68,7 @@ var (
 	txIndexer        txindex.TxIndexer
 	consensusReactor *consensus.ConsensusReactor
 	eventBus         *types.EventBus // thread safe
-	mempool          *mempl.Mempool
+	mempool          map[int32]*mempl.Mempool
 
 	logger log.Logger
 )
@@ -81,7 +81,7 @@ func SetBlockStore(bs sm.BlockStore) {
 	blockStore = bs
 }
 
-func SetMempool(mem *mempl.Mempool) {
+func SetMempool(mem map[int32]*mempl.Mempool) {
 	mempool = mem
 }
 

@@ -336,8 +336,12 @@ func newConsensusStateForReplay(config cfg.BaseConfig, csConfig *cfg.ConsensusCo
 		cmn.Exit(fmt.Sprintf("Error on handshake: %v", err))
 	}
 
-	mempool, evpool := sm.MockMempool{}, sm.MockEvidencePool{}
-	blockExec := sm.NewBlockExecutor(stateDB, log.TestingLogger(), proxyApp.Consensus(), mempool, evpool)
+	mempools := make(map[int32]sm.Mempool)
+	evpool := sm.MockEvidencePool{}
+	mempool := sm.MockMempool{}
+	mempools[0] = mempool
+
+	blockExec := sm.NewBlockExecutor(stateDB, log.TestingLogger(), proxyApp.Consensus(), mempools, evpool)
 
 	consensusState := NewConsensusState(csConfig, state.Copy(), blockExec,
 		blockStore, mempool, evpool)

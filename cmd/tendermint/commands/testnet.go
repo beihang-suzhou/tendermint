@@ -72,7 +72,7 @@ Example:
 }
 
 func testnetFiles(cmd *cobra.Command, args []string) error {
-	config := cfg.DefaultConfig()
+	config := cfg.DefaultConfig(0)
 	genVals := make([]types.GenesisValidator, nValidators)
 
 	for i := 0; i < nValidators; i++ {

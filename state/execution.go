@@ -30,7 +30,7 @@ type BlockExecutor struct {
 
 	// manage the mempool lock during commit
 	// and update both with block results after commit.
-	mempool Mempool
+	mempool map[int32]Mempool
 	evpool  EvidencePool
 
 	logger log.Logger
@@ -48,7 +48,7 @@ func BlockExecutorWithMetrics(metrics *Metrics) BlockExecutorOption {
 
 // NewBlockExecutor returns a new BlockExecutor with a NopEventBus.
 // Call SetEventBus to provide one.
-func NewBlockExecutor(db dbm.DB, logger log.Logger, proxyApp proxy.AppConnConsensus, mempool Mempool, evpool EvidencePool, options ...BlockExecutorOption) *BlockExecutor {
+func NewBlockExecutor(db dbm.DB, logger log.Logger, proxyApp proxy.AppConnConsensus, mempool map[int32]Mempool, evpool EvidencePool, options ...BlockExecutorOption) *BlockExecutor {
 	res := &BlockExecutor{
 		db:       db,
 		proxyApp: proxyApp,
@@ -91,8 +91,9 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 
 	// Fetch a limited amount of valid txs
 	maxDataBytes := types.MaxDataBytes(maxBytes, state.Validators.Size(), len(evidence))
-	txs := blockExec.mempool.ReapMaxBytesMaxGas(maxDataBytes, maxGas)
-
+	// need to modify
+	// 选择mempool的策略
+	txs := blockExec.mempool[0].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
 	return state.MakeBlock(height, txs, commit, evidence, proposerAddr)
 }
 
@@ -101,6 +102,7 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 // Validation does not mutate state, but does require historical information from the stateDB,
 // ie. to verify evidence from a validator at an old height.
 func (blockExec *BlockExecutor) ValidateBlock(state State, block *types.Block) error {
+
 	return validateBlock(blockExec.evpool, blockExec.db, state, block)
 }
 
@@ -170,7 +172,6 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
 	// Events are fired after everything else.
 	// NOTE: if we crash between Commit and Save, events wont be fired during replay
 	fireEvents(blockExec.logger, blockExec.eventBus, block, abciResponses, validatorUpdates)
-
 	return state, nil
 }
 
@@ -180,16 +181,17 @@ func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, b
 // The Mempool must be locked during commit and update because state is
 // typically reset on Commit and old txs must be replayed against committed
 // state before new txs are run in the mempool, lest they be invalid.
+//need modify
 func (blockExec *BlockExecutor) Commit(
 	state State,
 	block *types.Block,
 ) ([]byte, error) {
-	blockExec.mempool.Lock()
-	defer blockExec.mempool.Unlock()
+	blockExec.mempool[0].Lock()
+	defer blockExec.mempool[0].Unlock()
 
 	// while mempool is Locked, flush to ensure all async requests have completed
 	// in the ABCI app before Commit.
-	err := blockExec.mempool.FlushAppConn()
+	err := blockExec.mempool[0].FlushAppConn()
 	if err != nil {
 		blockExec.logger.Error("Client error during mempool.FlushAppConn", "err", err)
 		return nil, err
@@ -214,7 +216,7 @@ func (blockExec *BlockExecutor) Commit(
 	)
 
 	// Update mempool.
-	err = blockExec.mempool.Update(
+	err = blockExec.mempool[0].Update(
 		block.Height,
 		block.Txs,
 		TxPreCheck(state),
@@ -259,7 +261,7 @@ func execBlockOnProxyApp(
 			txIndex++
 		}
 	}
-	proxyAppConn.SetResponseCallback(proxyCb)
+	proxyAppConn.SetResponseCallback(block.Group, proxyCb)
 
 	commitInfo, byzVals := getBeginBlockValidatorInfo(block, lastValSet, stateDB)
 
@@ -278,7 +280,7 @@ func execBlockOnProxyApp(
 
 	// Run txs of block.
 	for _, tx := range block.Txs {
-		proxyAppConn.DeliverTxAsync(tx)
+		proxyAppConn.DeliverTxAsync(tx, block.Group)
 		if err := proxyAppConn.Error(); err != nil {
 			return nil, err
 		}

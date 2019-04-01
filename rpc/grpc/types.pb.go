@@ -73,6 +73,7 @@ var xxx_messageInfo_RequestPing proto.InternalMessageInfo
 
 type RequestBroadcastTx struct {
 	Tx                   []byte   `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
+	Group                int32    `protobuf:"varint,2,opt,name=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

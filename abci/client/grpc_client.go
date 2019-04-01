@@ -24,10 +24,10 @@ type grpcClient struct {
 	client types.ABCIApplicationClient
 	conn   *grpc.ClientConn
 
-	mtx   sync.Mutex
-	addr  string
-	err   error
-	resCb func(*types.Request, *types.Response) // listens to all callbacks
+	mtx    sync.Mutex
+	addr   string
+	err    error
+	resCbs map[int32]func(*types.Request, *types.Response) // listens to all callbacks
 }
 
 func NewGRPCClient(addr string, mustConnect bool) *grpcClient {
@@ -109,9 +109,9 @@ func (cli *grpcClient) Error() error {
 
 // Set listener for all responses
 // NOTE: callback may get internally generated flush responses.
-func (cli *grpcClient) SetResponseCallback(resCb Callback) {
+func (cli *grpcClient) SetResponseCallback(group int32, resCb Callback) {
 	cli.mtx.Lock()
-	cli.resCb = resCb
+	cli.resCbs[group] = resCb
 	cli.mtx.Unlock()
 }
 
@@ -159,8 +159,8 @@ func (cli *grpcClient) SetOptionAsync(params types.RequestSetOption) *ReqRes {
 	return cli.finishAsyncCall(req, &types.Response{Value: &types.Response_SetOption{SetOption: res}})
 }
 
-func (cli *grpcClient) DeliverTxAsync(tx []byte) *ReqRes {
-	req := types.ToRequestDeliverTx(tx)
+func (cli *grpcClient) DeliverTxAsync(tx []byte, group int32) *ReqRes {
+	req := types.ToRequestDeliverTx(tx, group)
 	res, err := cli.client.DeliverTx(context.Background(), req.GetDeliverTx(), grpc.FailFast(true))
 	if err != nil {
 		cli.StopForError(err)
@@ -168,8 +168,8 @@ func (cli *grpcClient) DeliverTxAsync(tx []byte) *ReqRes {
 	return cli.finishAsyncCall(req, &types.Response{Value: &types.Response_DeliverTx{DeliverTx: res}})
 }
 
-func (cli *grpcClient) CheckTxAsync(tx []byte) *ReqRes {
-	req := types.ToRequestCheckTx(tx)
+func (cli *grpcClient) CheckTxAsync(tx []byte, group int32) *ReqRes {
+	req := types.ToRequestCheckTx(tx, group)
 	res, err := cli.client.CheckTx(context.Background(), req.GetCheckTx(), grpc.FailFast(true))
 	if err != nil {
 		cli.StopForError(err)
@@ -236,8 +236,10 @@ func (cli *grpcClient) finishAsyncCall(req *types.Request, res *types.Response) 
 		}
 
 		// Notify client listener if set
-		if cli.resCb != nil {
-			cli.resCb(reqres.Request, res)
+		if cli.resCbs != nil && len(cli.resCbs) != 0 {
+			for _, item := range cli.resCbs {
+				item(reqres.Request, res)
+			}
 		}
 	}()
 	return reqres
@@ -265,13 +267,13 @@ func (cli *grpcClient) SetOptionSync(req types.RequestSetOption) (*types.Respons
 	return reqres.Response.GetSetOption(), cli.Error()
 }
 
-func (cli *grpcClient) DeliverTxSync(tx []byte) (*types.ResponseDeliverTx, error) {
-	reqres := cli.DeliverTxAsync(tx)
+func (cli *grpcClient) DeliverTxSync(tx []byte, group int32) (*types.ResponseDeliverTx, error) {
+	reqres := cli.DeliverTxAsync(tx, group)
 	return reqres.Response.GetDeliverTx(), cli.Error()
 }
 
-func (cli *grpcClient) CheckTxSync(tx []byte) (*types.ResponseCheckTx, error) {
-	reqres := cli.CheckTxAsync(tx)
+func (cli *grpcClient) CheckTxSync(tx []byte, group int32) (*types.ResponseCheckTx, error) {
+	reqres := cli.CheckTxAsync(tx, group)
 	return reqres.Response.GetCheckTx(), cli.Error()
 }
 

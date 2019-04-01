@@ -755,8 +755,8 @@ type Data struct {
 	// Txs that will be applied by state @ block.Height+1.
 	// NOTE: not all txs here are valid.  We're just agreeing on the order first.
 	// This means that block.AppHash does not include these txs.
-	Txs Txs `json:"txs"`
-
+	Txs   Txs   `json:"txs"`
+	Group int32 `json:"group"`
 	// Volatile
 	hash cmn.HexBytes
 }

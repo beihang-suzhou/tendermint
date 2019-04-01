@@ -59,7 +59,7 @@ func testStream(t *testing.T, app types.Application) {
 
 	done := make(chan struct{})
 	counter := 0
-	client.SetResponseCallback(func(req *types.Request, res *types.Response) {
+	client.SetResponseCallback(0, func(req *types.Request, res *types.Response) {
 		// Process response
 		switch r := res.Value.(type) {
 		case *types.Response_DeliverTx:

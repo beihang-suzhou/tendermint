@@ -148,6 +148,11 @@ type QueryArgs struct {
 	Prove  bool
 }
 
+type TxArgs struct {
+	Tx    types.Tx
+	Group int32
+}
+
 func (r *ABCIRecorder) addCall(call Call) {
 	r.Calls = append(r.Calls, call)
 }
@@ -177,33 +182,33 @@ func (r *ABCIRecorder) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts
 	return res, err
 }
 
-func (r *ABCIRecorder) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
-	res, err := r.Client.BroadcastTxCommit(tx)
+func (r *ABCIRecorder) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
+	res, err := r.Client.BroadcastTxCommit(tx, group)
 	r.addCall(Call{
 		Name:     "broadcast_tx_commit",
-		Args:     tx,
+		Args:     TxArgs{Tx: tx, Group: group},
 		Response: res,
 		Error:    err,
 	})
 	return res, err
 }
 
-func (r *ABCIRecorder) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	res, err := r.Client.BroadcastTxAsync(tx)
+func (r *ABCIRecorder) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	res, err := r.Client.BroadcastTxAsync(tx, group)
 	r.addCall(Call{
 		Name:     "broadcast_tx_async",
-		Args:     tx,
+		Args:     TxArgs{Tx: tx, Group: group},
 		Response: res,
 		Error:    err,
 	})
 	return res, err
 }
 
-func (r *ABCIRecorder) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	res, err := r.Client.BroadcastTxSync(tx)
+func (r *ABCIRecorder) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	res, err := r.Client.BroadcastTxSync(tx, group)
 	r.addCall(Call{
 		Name:     "broadcast_tx_sync",
-		Args:     tx,
+		Args:     TxArgs{Tx: tx, Group: group},
 		Response: res,
 		Error:    err,
 	})

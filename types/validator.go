@@ -13,18 +13,19 @@ import (
 // NOTE: The ProposerPriority is not included in Validator.Hash();
 // make sure to update that method if changes are made here
 type Validator struct {
-	Address     Address       `json:"address"`
-	PubKey      crypto.PubKey `json:"pub_key"`
-	VotingPower int64         `json:"voting_power"`
-
-	ProposerPriority int64 `json:"proposer_priority"`
+	Address          Address       `json:"address"`
+	PubKey           crypto.PubKey `json:"pub_key"`
+	VotingPower      int64         `json:"voting_power"`
+	Group            int32         `json:"group"`
+	ProposerPriority int64         `json:"proposer_priority"`
 }
 
-func NewValidator(pubKey crypto.PubKey, votingPower int64) *Validator {
+func NewValidator(pubKey crypto.PubKey, votingPower int64, group int32) *Validator {
 	return &Validator{
 		Address:          pubKey.Address(),
 		PubKey:           pubKey,
 		VotingPower:      votingPower,
+		Group:            group,
 		ProposerPriority: 0,
 	}
 }
@@ -87,9 +88,11 @@ func (v *Validator) Bytes() []byte {
 	return cdcEncode(struct {
 		PubKey      crypto.PubKey
 		VotingPower int64
+		Group       int32
 	}{
 		v.PubKey,
 		v.VotingPower,
+		v.Group,
 	})
 }
 
@@ -105,6 +108,6 @@ func RandValidator(randPower bool, minPower int64) (*Validator, PrivValidator) {
 		votePower += int64(cmn.RandUint32())
 	}
 	pubKey := privVal.GetPubKey()
-	val := NewValidator(pubKey, votePower)
+	val := NewValidator(pubKey, votePower, 0)
 	return val, privVal
 }

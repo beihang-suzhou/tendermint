@@ -37,9 +37,9 @@ type ABCIClient interface {
 		opts ABCIQueryOptions) (*ctypes.ResultABCIQuery, error)
 
 	// Writing to abci app
-	BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error)
-	BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error)
-	BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error)
+	BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error)
+	BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error)
+	BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error)
 }
 
 // SignClient groups together the interfaces need to get valid
@@ -96,6 +96,6 @@ type EventsClient interface {
 
 // MempoolClient shows us data about current mempool state.
 type MempoolClient interface {
-	UnconfirmedTxs(limit int) (*ctypes.ResultUnconfirmedTxs, error)
-	NumUnconfirmedTxs() (*ctypes.ResultUnconfirmedTxs, error)
+	UnconfirmedTxs(limit int, group int32) (*ctypes.ResultUnconfirmedTxs, error)
+	NumUnconfirmedTxs(group int32) (*ctypes.ResultUnconfirmedTxs, error)
 }

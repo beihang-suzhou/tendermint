@@ -83,42 +83,42 @@ func (c *HTTP) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts ABCIQue
 	return result, nil
 }
 
-func (c *HTTP) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
+func (c *HTTP) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
 	result := new(ctypes.ResultBroadcastTxCommit)
-	_, err := c.rpc.Call("broadcast_tx_commit", map[string]interface{}{"tx": tx}, result)
+	_, err := c.rpc.Call("broadcast_tx_commit", map[string]interface{}{"tx": tx, "group": group}, result)
 	if err != nil {
 		return nil, errors.Wrap(err, "broadcast_tx_commit")
 	}
 	return result, nil
 }
 
-func (c *HTTP) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return c.broadcastTX("broadcast_tx_async", tx)
+func (c *HTTP) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	return c.broadcastTX("broadcast_tx_async", tx, group)
 }
 
-func (c *HTTP) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return c.broadcastTX("broadcast_tx_sync", tx)
+func (c *HTTP) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	return c.broadcastTX("broadcast_tx_sync", tx, group)
 }
 
-func (c *HTTP) broadcastTX(route string, tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func (c *HTTP) broadcastTX(route string, tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	result := new(ctypes.ResultBroadcastTx)
-	_, err := c.rpc.Call(route, map[string]interface{}{"tx": tx}, result)
+	_, err := c.rpc.Call(route, map[string]interface{}{"tx": tx, "group": group}, result)
 	if err != nil {
 		return nil, errors.Wrap(err, route)
 	}
 	return result, nil
 }
 
-func (c *HTTP) UnconfirmedTxs(limit int) (*ctypes.ResultUnconfirmedTxs, error) {
+func (c *HTTP) UnconfirmedTxs(limit int, group int32) (*ctypes.ResultUnconfirmedTxs, error) {
 	result := new(ctypes.ResultUnconfirmedTxs)
-	_, err := c.rpc.Call("unconfirmed_txs", map[string]interface{}{"limit": limit}, result)
+	_, err := c.rpc.Call("unconfirmed_txs", map[string]interface{}{"limit": limit, "group": group}, result)
 	if err != nil {
 		return nil, errors.Wrap(err, "unconfirmed_txs")
 	}
 	return result, nil
 }
 
-func (c *HTTP) NumUnconfirmedTxs() (*ctypes.ResultUnconfirmedTxs, error) {
+func (c *HTTP) NumUnconfirmedTxs(group int32) (*ctypes.ResultUnconfirmedTxs, error) {
 	result := new(ctypes.ResultUnconfirmedTxs)
 	_, err := c.rpc.Call("num_unconfirmed_txs", map[string]interface{}{}, result)
 	if err != nil {

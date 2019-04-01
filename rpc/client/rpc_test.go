@@ -290,7 +290,7 @@ func TestUnconfirmedTxs(t *testing.T) {
 	for i, c := range GetClients() {
 		mc, ok := c.(client.MempoolClient)
 		require.True(t, ok, "%d", i)
-		txs, err := mc.UnconfirmedTxs(1)
+		txs, err := mc.UnconfirmedTxs(1, 0)
 		require.Nil(t, err, "%d: %+v", i, err)
 		assert.Exactly(t, types.Txs{tx}, types.Txs(txs.Txs))
 	}
@@ -308,7 +308,7 @@ func TestNumUnconfirmedTxs(t *testing.T) {
 	for i, c := range GetClients() {
 		mc, ok := c.(client.MempoolClient)
 		require.True(t, ok, "%d", i)
-		res, err := mc.NumUnconfirmedTxs()
+		res, err := mc.NumUnconfirmedTxs(0)
 		require.Nil(t, err, "%d: %+v", i, err)
 
 		assert.Equal(t, mempoolSize, res.N)

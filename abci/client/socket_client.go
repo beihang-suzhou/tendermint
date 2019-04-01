@@ -35,7 +35,7 @@ type socketClient struct {
 	conn    net.Conn
 	err     error
 	reqSent *list.List
-	resCb   func(*types.Request, *types.Response) // listens to all callbacks
+	resCbs  map[int32]func(*types.Request, *types.Response) // listens to all callbacks
 
 }
 
@@ -47,7 +47,7 @@ func NewSocketClient(addr string, mustConnect bool) *socketClient {
 
 		addr:    addr,
 		reqSent: list.New(),
-		resCb:   nil,
+		resCbs:  nil,
 	}
 	cli.BaseService = *cmn.NewBaseService(nil, "socketClient", cli)
 	return cli
@@ -116,9 +116,9 @@ func (cli *socketClient) Error() error {
 
 // Set listener for all responses
 // NOTE: callback may get internally generated flush responses.
-func (cli *socketClient) SetResponseCallback(resCb Callback) {
+func (cli *socketClient) SetResponseCallback(group int32, resCb Callback) {
 	cli.mtx.Lock()
-	cli.resCb = resCb
+	cli.resCbs[group] = resCb
 	cli.mtx.Unlock()
 }
 
@@ -213,10 +213,11 @@ func (cli *socketClient) didRecvResponse(res *types.Response) error {
 	}
 
 	// Notify client listener if set
-	if cli.resCb != nil {
-		cli.resCb(reqres.Request, res)
+	if cli.resCbs != nil && len(cli.resCbs) != 0 {
+		for _, item := range cli.resCbs {
+			item(reqres.Request, res)
+		}
 	}
-
 	return nil
 }
 
@@ -238,12 +239,12 @@ func (cli *socketClient) SetOptionAsync(req types.RequestSetOption) *ReqRes {
 	return cli.queueRequest(types.ToRequestSetOption(req))
 }
 
-func (cli *socketClient) DeliverTxAsync(tx []byte) *ReqRes {
-	return cli.queueRequest(types.ToRequestDeliverTx(tx))
+func (cli *socketClient) DeliverTxAsync(tx []byte, group int32) *ReqRes {
+	return cli.queueRequest(types.ToRequestDeliverTx(tx, group))
 }
 
-func (cli *socketClient) CheckTxAsync(tx []byte) *ReqRes {
-	return cli.queueRequest(types.ToRequestCheckTx(tx))
+func (cli *socketClient) CheckTxAsync(tx []byte, group int32) *ReqRes {
+	return cli.queueRequest(types.ToRequestCheckTx(tx, group))
 }
 
 func (cli *socketClient) QueryAsync(req types.RequestQuery) *ReqRes {
@@ -295,14 +296,14 @@ func (cli *socketClient) SetOptionSync(req types.RequestSetOption) (*types.Respo
 	return reqres.Response.GetSetOption(), cli.Error()
 }
 
-func (cli *socketClient) DeliverTxSync(tx []byte) (*types.ResponseDeliverTx, error) {
-	reqres := cli.queueRequest(types.ToRequestDeliverTx(tx))
+func (cli *socketClient) DeliverTxSync(tx []byte, group int32) (*types.ResponseDeliverTx, error) {
+	reqres := cli.queueRequest(types.ToRequestDeliverTx(tx, group))
 	cli.FlushSync()
 	return reqres.Response.GetDeliverTx(), cli.Error()
 }
 
-func (cli *socketClient) CheckTxSync(tx []byte) (*types.ResponseCheckTx, error) {
-	reqres := cli.queueRequest(types.ToRequestCheckTx(tx))
+func (cli *socketClient) CheckTxSync(tx []byte, group int32) (*types.ResponseCheckTx, error) {
+	reqres := cli.queueRequest(types.ToRequestCheckTx(tx, group))
 	cli.FlushSync()
 	return reqres.Response.GetCheckTx(), cli.Error()
 }

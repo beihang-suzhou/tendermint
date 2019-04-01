@@ -70,12 +70,12 @@ type Config struct {
 }
 
 // DefaultConfig returns a default configuration for a Tendermint node
-func DefaultConfig() *Config {
+func DefaultConfig(group int32) *Config {
 	return &Config{
 		BaseConfig:      DefaultBaseConfig(),
 		RPC:             DefaultRPCConfig(),
 		P2P:             DefaultP2PConfig(),
-		Mempool:         DefaultMempoolConfig(),
+		Mempool:         DefaultMempoolConfig(group),
 		Consensus:       DefaultConsensusConfig(),
 		TxIndex:         DefaultTxIndexConfig(),
 		Instrumentation: DefaultInstrumentationConfig(),
@@ -84,11 +84,14 @@ func DefaultConfig() *Config {
 
 // TestConfig returns a configuration that can be used for testing
 func TestConfig() *Config {
+	mempools := make([]*MempoolConfig, 1)
+	// at least has one mempool
+	mempools[0] = DefaultMempoolConfig(0)
 	return &Config{
 		BaseConfig:      TestBaseConfig(),
 		RPC:             TestRPCConfig(),
 		P2P:             TestP2PConfig(),
-		Mempool:         TestMempoolConfig(),
+		Mempool:         mempools[0],
 		Consensus:       TestConsensusConfig(),
 		TxIndex:         TestTxIndexConfig(),
 		Instrumentation: TestInstrumentationConfig(),
@@ -117,9 +120,7 @@ func (cfg *Config) ValidateBasic() error {
 	if err := cfg.P2P.ValidateBasic(); err != nil {
 		return errors.Wrap(err, "Error in [p2p] section")
 	}
-	if err := cfg.Mempool.ValidateBasic(); err != nil {
-		return errors.Wrap(err, "Error in [mempool] section")
-	}
+
 	if err := cfg.Consensus.ValidateBasic(); err != nil {
 		return errors.Wrap(err, "Error in [consensus] section")
 	}
@@ -527,7 +528,6 @@ func DefaultFuzzConnConfig() *FuzzConnConfig {
 
 //-----------------------------------------------------------------------------
 // MempoolConfig
-
 // MempoolConfig defines the configuration options for the Tendermint mempool
 type MempoolConfig struct {
 	RootDir   string `mapstructure:"home"`
@@ -536,10 +536,11 @@ type MempoolConfig struct {
 	WalPath   string `mapstructure:"wal_dir"`
 	Size      int    `mapstructure:"size"`
 	CacheSize int    `mapstructure:"cache_size"`
+	Group     int32  `mapstructure:"group"`
 }
 
 // DefaultMempoolConfig returns a default configuration for the Tendermint mempool
-func DefaultMempoolConfig() *MempoolConfig {
+func DefaultMempoolConfig(group int32) *MempoolConfig {
 	return &MempoolConfig{
 		Recheck:   true,
 		Broadcast: true,
@@ -548,12 +549,13 @@ func DefaultMempoolConfig() *MempoolConfig {
 		// ABCI Recheck
 		Size:      5000,
 		CacheSize: 10000,
+		Group:     group,
 	}
 }
 
 // TestMempoolConfig returns a configuration for testing the Tendermint mempool
 func TestMempoolConfig() *MempoolConfig {
-	cfg := DefaultMempoolConfig()
+	cfg := DefaultMempoolConfig(0)
 	cfg.CacheSize = 1000
 	return cfg
 }

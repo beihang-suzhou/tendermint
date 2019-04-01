@@ -16,10 +16,11 @@ func (bapi *broadcastAPI) Ping(ctx context.Context, req *RequestPing) (*Response
 }
 
 func (bapi *broadcastAPI) BroadcastTx(ctx context.Context, req *RequestBroadcastTx) (*ResponseBroadcastTx, error) {
-	res, err := core.BroadcastTxCommit(req.Tx)
+	res, err := core.BroadcastTxCommit(req.Tx, req.Group)
 	if err != nil {
 		return nil, err
 	}
+
 	return &ResponseBroadcastTx{
 
 		CheckTx: &abci.ResponseCheckTx{

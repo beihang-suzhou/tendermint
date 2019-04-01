@@ -900,6 +900,7 @@ func (m *RequestBeginBlock) GetByzantineValidators() []Evidence {
 
 type RequestCheckTx struct {
 	Tx                   []byte   `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
+	Group                int32    `protobuf:"varint,2,opt,name=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -947,6 +948,7 @@ func (m *RequestCheckTx) GetTx() []byte {
 
 type RequestDeliverTx struct {
 	Tx                   []byte   `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
+	Group                int32    `protobuf:"varint,2,opt,name=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -3025,6 +3027,7 @@ func (m *Validator) GetPower() int64 {
 type ValidatorUpdate struct {
 	PubKey               PubKey   `protobuf:"bytes,1,opt,name=pub_key,json=pubKey" json:"pub_key"`
 	Power                int64    `protobuf:"varint,2,opt,name=power,proto3" json:"power,omitempty"`
+	Group                int32    `protobuf:"varint,3,opt,name=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
