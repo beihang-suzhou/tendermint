@@ -26,16 +26,25 @@ const (
 // MempoolReactor handles mempool tx broadcasting amongst peers.
 type MempoolReactor struct {
 	p2p.BaseReactor
-	config  *cfg.MempoolConfig
+	Mempools map[int32] /*group id*/ *MempoolItem
+}
+
+type MempoolItem struct {
+	Config  *cfg.MempoolConfig
 	Mempool *Mempool
 }
 
 // NewMempoolReactor returns a new MempoolReactor with the given config and mempool.
-func NewMempoolReactor(config *cfg.MempoolConfig, mempool *Mempool) *MempoolReactor {
-	memR := &MempoolReactor{
-		config:  config,
-		Mempool: mempool,
+func NewMempoolReactor(items []*MempoolItem) *MempoolReactor {
+	memR := &MempoolReactor{}
+	memR.Mempools = make(map[int32]*MempoolItem, len(items))
+	for _, item := range items {
+		memR.Mempools[item.Config.Group] = &MempoolItem{
+			Config:  item.Config,
+			Mempool: item.Mempool,
+		}
 	}
+
 	memR.BaseReactor = *p2p.NewBaseReactor("MempoolReactor", memR)
 	return memR
 }
@@ -43,14 +52,20 @@ func NewMempoolReactor(config *cfg.MempoolConfig, mempool *Mempool) *MempoolReac
 // SetLogger sets the Logger on the reactor and the underlying Mempool.
 func (memR *MempoolReactor) SetLogger(l log.Logger) {
 	memR.Logger = l
-	memR.Mempool.SetLogger(l)
+
+	for _, item := range memR.Mempools {
+		item.Mempool.SetLogger(l)
+	}
 }
 
 // OnStart implements p2p.BaseReactor.
 func (memR *MempoolReactor) OnStart() error {
-	if !memR.config.Broadcast {
-		memR.Logger.Info("Tx broadcasting is disabled")
+	for i, item := range memR.Mempools {
+		if !item.Config.Broadcast {
+			memR.Logger.Info("Tx broadcasting is disabled. Mempool id is %d", i)
+		}
 	}
+
 	return nil
 }
 
@@ -89,7 +104,7 @@ func (memR *MempoolReactor) Receive(chID byte, src p2p.Peer, msgBytes []byte) {
 
 	switch msg := msg.(type) {
 	case *TxMessage:
-		err := memR.Mempool.CheckTx(msg.Tx, nil)
+		err := memR.Mempools[msg.Group].Mempool.CheckTx(msg.Tx, nil)
 		if err != nil {
 			memR.Logger.Info("Could not check tx", "tx", TxID(msg.Tx), "err", err)
 		}
@@ -106,25 +121,36 @@ type PeerState interface {
 
 // Send new mempool txs to peer.
 func (memR *MempoolReactor) broadcastTxRoutine(peer p2p.Peer) {
-	if !memR.config.Broadcast {
-		return
-	}
-
 	var next *clist.CElement
 	for {
+		var selectGroup int32
 		// This happens because the CElement we were looking at got garbage
 		// collected (removed). That is, .NextWait() returned nil. Go ahead and
 		// start from the beginning.
 		if next == nil {
-			select {
-			case <-memR.Mempool.TxsWaitChan(): // Wait until a tx is available
-				if next = memR.Mempool.TxsFront(); next == nil {
+
+			// todo order the mempool
+			for key, item := range memR.Mempools {
+				if !item.Config.Broadcast {
 					continue
 				}
-			case <-peer.Quit():
-				return
-			case <-memR.Quit():
-				return
+				select {
+				// need modify need lock
+				case <-item.Mempool.TxsWaitChan(): // Wait until a tx is available
+					if next = item.Mempool.TxsFront(); next == nil {
+						continue
+					} else {
+						selectGroup = key
+						break
+					}
+				case <-peer.Quit():
+					return
+				case <-memR.Quit():
+					return
+				}
+			}
+			if next == nil {
+				continue
 			}
 		}
 
@@ -147,7 +173,7 @@ func (memR *MempoolReactor) broadcastTxRoutine(peer p2p.Peer) {
 		}
 
 		// send memTx
-		msg := &TxMessage{Tx: memTx.tx}
+		msg := &TxMessage{Tx: memTx.tx, Group: selectGroup}
 		success := peer.Send(MempoolChannel, cdc.MustMarshalBinaryBare(msg))
 		if !success {
 			time.Sleep(peerCatchupSleepIntervalMS * time.Millisecond)
@@ -189,10 +215,11 @@ func decodeMsg(bz []byte) (msg MempoolMessage, err error) {
 
 // TxMessage is a MempoolMessage containing a transaction.
 type TxMessage struct {
-	Tx types.Tx
+	Tx    types.Tx
+	Group int32
 }
 
 // String returns a string representation of the TxMessage.
 func (m *TxMessage) String() string {
-	return fmt.Sprintf("[TxMessage %v]", m.Tx)
+	return fmt.Sprintf("[TxMessage %v][TxGroup %d]", m.Tx, m.Group)
 }

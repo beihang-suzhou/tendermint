@@ -53,8 +53,11 @@ import (
 // | Parameter | Type | Default | Required | Description     |
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
-func BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	err := mempool.CheckTx(tx, nil)
+func BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	if _, ok := mempool[group]; !ok {
+		return nil, errors.New("Mempool group is not exist.")
+	}
+	err := mempool[group].CheckTx(tx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +101,13 @@ func BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 // | Parameter | Type | Default | Required | Description     |
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
-func BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	resCh := make(chan *abci.Response, 1)
-	err := mempool.CheckTx(tx, func(res *abci.Response) {
+
+	if _, ok := mempool[group]; !ok {
+		return nil, errors.New("Mempool group is not exist.")
+	}
+	err := mempool[group].CheckTx(tx, func(res *abci.Response) {
 		resCh <- res
 	})
 	if err != nil {
@@ -165,7 +172,11 @@ func BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 // | Parameter | Type | Default | Required | Description     |
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
-func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
+func BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
+	if _, ok := mempool[group]; !ok {
+		return nil, errors.New("Mempool group is not exist.")
+	}
+
 	// Subscribe to tx being committed in block.
 	ctx, cancel := context.WithTimeout(context.Background(), subscribeTimeout)
 	defer cancel()
@@ -192,7 +203,7 @@ func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 
 	// Broadcast tx and wait for CheckTx result
 	checkTxResCh := make(chan *abci.Response, 1)
-	err = mempool.CheckTx(tx, func(res *abci.Response) {
+	err = mempool[group].CheckTx(tx, func(res *abci.Response) {
 		checkTxResCh <- res
 	})
 	if err != nil {
@@ -270,11 +281,15 @@ func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 // |-----------+------+---------+----------+--------------------------------------|
 // | limit     | int  | 30      | false    | Maximum number of entries (max: 100) |
 // ```
-func UnconfirmedTxs(limit int) (*ctypes.ResultUnconfirmedTxs, error) {
+func UnconfirmedTxs(limit int, group int32) (*ctypes.ResultUnconfirmedTxs, error) {
+	if _, ok := mempool[group]; !ok {
+		return nil, errors.New("Mempool group is not exist.")
+	}
+
 	// reuse per_page validator
 	limit = validatePerPage(limit)
 
-	txs := mempool.ReapMaxTxs(limit)
+	txs := mempool[group].ReapMaxTxs(limit)
 	return &ctypes.ResultUnconfirmedTxs{N: len(txs), Txs: txs}, nil
 }
 
@@ -307,6 +322,9 @@ func UnconfirmedTxs(limit int) (*ctypes.ResultUnconfirmedTxs, error) {
 //   "jsonrpc": "2.0"
 // }
 // ```
-func NumUnconfirmedTxs() (*ctypes.ResultUnconfirmedTxs, error) {
-	return &ctypes.ResultUnconfirmedTxs{N: mempool.Size()}, nil
+func NumUnconfirmedTxs(group int32) (*ctypes.ResultUnconfirmedTxs, error) {
+	if _, ok := mempool[group]; !ok {
+		return nil, errors.New("Mempool group is not exist.")
+	}
+	return &ctypes.ResultUnconfirmedTxs{N: mempool[group].Size()}, nil
 }

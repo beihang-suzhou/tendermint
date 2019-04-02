@@ -73,18 +73,18 @@ type Config struct {
 }
 
 // DefaultConfig returns a default configuration for a Tendermint node
-func DefaultConfig() *Config {
+func DefaultConfig(group int32) *Config {
 	return &Config{
 		BaseConfig:      DefaultBaseConfig(),
 		RPC:             DefaultRPCConfig(),
 		P2P:             DefaultP2PConfig(),
-		Mempool:         DefaultMempoolConfig(),
+		Mempool:         DefaultMempoolConfig(group),
 		Consensus:       DefaultConsensusConfig(),
 		TxIndex:         DefaultTxIndexConfig(),
 		Instrumentation: DefaultInstrumentationConfig(),
 	}
 
-    //方法1
+	//方法1
 	/*var conf *Config
 	file,_:=os.Open("tm.toml")
 	buf,_:=ioutil.ReadAll(file)
@@ -104,16 +104,19 @@ func DefaultConfig() *Config {
 	return conf
 	*/
 
-
 }
+
 //改为toml方式读取时，此处需要注释掉
 // TestConfig returns a configuration that can be used for testing
 func TestConfig() *Config {
+	mempools := make([]*MempoolConfig, 1)
+	// at least has one mempool
+	mempools[0] = DefaultMempoolConfig(0)
 	return &Config{
 		BaseConfig:      TestBaseConfig(),
 		RPC:             TestRPCConfig(),
 		P2P:             TestP2PConfig(),
-		Mempool:         TestMempoolConfig(),
+		Mempool:         mempools[0],
 		Consensus:       TestConsensusConfig(),
 		TxIndex:         TestTxIndexConfig(),
 		Instrumentation: TestInstrumentationConfig(),
@@ -143,9 +146,7 @@ func (cfg *Config) ValidateBasic() error {
 	if err := cfg.P2P.ValidateBasic(); err != nil {
 		return errors.Wrap(err, "Error in [p2p] section")
 	}
-	if err := cfg.Mempool.ValidateBasic(); err != nil {
-		return errors.Wrap(err, "Error in [mempool] section")
-	}
+
 	if err := cfg.Consensus.ValidateBasic(); err != nil {
 		return errors.Wrap(err, "Error in [consensus] section")
 	}
@@ -392,14 +393,17 @@ func (cfg *RPCConfig) ValidateBasic() error {
 func (cfg *RPCConfig) IsCorsEnabled() bool {
 	return len(cfg.CORSAllowedOrigins) != 0
 }
+
 type duration struct {
 	time.Duration
 }
+
 func (d *duration) UnmarshalText(text []byte) error {
 	var err error
 	d.Duration, err = time.ParseDuration(string(text))
 	return err
 }
+
 //-----------------------------------------------------------------------------
 // P2PConfig
 
@@ -569,7 +573,6 @@ func DefaultFuzzConnConfig() *FuzzConnConfig {
 
 //-----------------------------------------------------------------------------
 // MempoolConfig
-
 // MempoolConfig defines the configuration options for the Tendermint mempool
 type MempoolConfig struct {
 	RootDir   string `toml:"home" mapstructure:"home"`
@@ -578,10 +581,11 @@ type MempoolConfig struct {
 	WalPath   string `toml:"wal_dir" mapstructure:"wal_dir"`
 	Size      int    `toml:"size" mapstructure:"size"`
 	CacheSize int    `toml:"cache_size" mapstructure:"cache_size"`
+	Group     int32  `toml:"group" mapstructure:"group"`
 }
 
 // DefaultMempoolConfig returns a default configuration for the Tendermint mempool
-func DefaultMempoolConfig() *MempoolConfig {
+func DefaultMempoolConfig(group int32) *MempoolConfig {
 	return &MempoolConfig{
 		Recheck:   true,
 		Broadcast: true,
@@ -590,12 +594,13 @@ func DefaultMempoolConfig() *MempoolConfig {
 		// ABCI Recheck
 		Size:      5000,
 		CacheSize: 10000,
+		Group:     group,
 	}
 }
 
 // TestMempoolConfig returns a configuration for testing the Tendermint mempool
 func TestMempoolConfig() *MempoolConfig {
-	cfg := DefaultMempoolConfig()
+	cfg := DefaultMempoolConfig(0)
 	cfg.CacheSize = 1000
 	return cfg
 }
@@ -641,7 +646,7 @@ type ConsensusConfig struct {
 	TimeoutCommit         time.Duration `mapstructure:"timeout_commit"`
 	//默认方式解析time.Duration
 	CreateEmptyBlocksInterval time.Duration `mapstructure:"create_empty_blocks_interval"`
-	PeerGossipSleepDuration     time.Duration `mapstructure:"peer_gossip_sleep_duration"`
+	PeerGossipSleepDuration   time.Duration `mapstructure:"peer_gossip_sleep_duration"`
 	//Reactor sleep duration parameters
 	PeerQueryMaj23SleepDuration time.Duration `mapstructure:"peer_query_maj23_sleep_duration"`
 	//Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
@@ -666,7 +671,7 @@ type ConsensusConfig struct {
 	// Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 	SkipTimeoutCommit bool `toml:"skip_timeout_commit" mapstructure:"skip_timeout_commit"`
 	// EmptyBlocks mode and possible interval between empty blocks
-	CreateEmptyBlocks         bool          `toml:"create_empty_blocks" mapstructure:"create_empty_blocks"`
+	CreateEmptyBlocks bool `toml:"create_empty_blocks" mapstructure:"create_empty_blocks"`
 }
 
 // DefaultConsensusConfig returns a default configuration for the consensus service

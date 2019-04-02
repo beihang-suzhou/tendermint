@@ -69,9 +69,9 @@ func RPCRoutes(c rpcclient.Client) map[string]*rpcserver.RPCFunc {
 		"validators": rpcserver.NewRPCFunc(c.Validators, ""),
 
 		// broadcast API
-		"broadcast_tx_commit": rpcserver.NewRPCFunc(c.BroadcastTxCommit, "tx"),
-		"broadcast_tx_sync":   rpcserver.NewRPCFunc(c.BroadcastTxSync, "tx"),
-		"broadcast_tx_async":  rpcserver.NewRPCFunc(c.BroadcastTxAsync, "tx"),
+		"broadcast_tx_commit": rpcserver.NewRPCFunc(c.BroadcastTxCommit, "tx,group"),
+		"broadcast_tx_sync":   rpcserver.NewRPCFunc(c.BroadcastTxSync, "tx,group"),
+		"broadcast_tx_async":  rpcserver.NewRPCFunc(c.BroadcastTxAsync, "tx,group"),
 
 		// abci API
 		"abci_query": rpcserver.NewRPCFunc(c.ABCIQuery, "path,data,prove"),

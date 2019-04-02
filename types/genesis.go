@@ -29,6 +29,7 @@ type GenesisValidator struct {
 	PubKey  crypto.PubKey `json:"pub_key"`
 	Power   int64         `json:"power"`
 	Name    string        `json:"name"`
+	Group   int32         `json:"group`
 }
 
 // GenesisDoc defines the initial conditions for a tendermint blockchain, in particular its validator set.
@@ -54,7 +55,7 @@ func (genDoc *GenesisDoc) SaveAs(file string) error {
 func (genDoc *GenesisDoc) ValidatorHash() []byte {
 	vals := make([]*Validator, len(genDoc.Validators))
 	for i, v := range genDoc.Validators {
-		vals[i] = NewValidator(v.PubKey, v.Power)
+		vals[i] = NewValidator(v.PubKey, v.Power, v.Group)
 	}
 	vset := NewValidatorSet(vals)
 	return vset.Hash()

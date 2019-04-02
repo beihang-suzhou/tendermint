@@ -318,25 +318,52 @@ func NewNode(config *cfg.Config,
 
 	csMetrics, p2pMetrics, memplMetrics, smMetrics := metricsProvider(genDoc.ChainID)
 
-	// Make MempoolReactor
-	mempool := mempl.NewMempool(
-		config.Mempool,
-		proxyApp.Mempool(),
-		state.LastBlockHeight,
-		mempl.WithMetrics(memplMetrics),
-		mempl.WithPreCheck(sm.TxPreCheck(state)),
-		mempl.WithPostCheck(sm.TxPostCheck(state)),
-	)
 	mempoolLogger := logger.With("module", "mempool")
-	mempool.SetLogger(mempoolLogger)
-	if config.Mempool.WalEnabled() {
-		mempool.InitWAL() // no need to have the mempool wal during tests
+	// Make MempoolReactor
+	groupNum := 1
+	for i := 0; i < 32; i++ {
+		if (config.Mempool.Group>>uint32(i))&1 == 1 {
+			groupNum++
+		}
 	}
-	mempoolReactor := mempl.NewMempoolReactor(config.Mempool, mempool)
+
+	mempoolItems := make([]*mempl.MempoolItem, groupNum)
+	var mem *mempl.Mempool
+
+	var i int32
+	var j int32 = 0
+	for i = 0; i < 33; i++ {
+		if i != 0 && (config.Mempool.Group>>uint32(i-1))&1 == 0 {
+			continue
+		}
+
+		conf := *config.Mempool
+		conf.Group = i
+		mem = mempl.NewMempool(
+			&conf,
+			proxyApp.Mempool(),
+			state.LastBlockHeight,
+			mempl.WithMetrics(memplMetrics),
+			mempl.WithPreCheck(sm.TxPreCheck(state)),
+			mempl.WithPostCheck(sm.TxPostCheck(state)),
+		)
+
+		mem.SetLogger(mempoolLogger)
+		if conf.WalEnabled() {
+			mem.InitWAL() // no need to have the mempool wal during tests
+		}
+
+		mempoolItems[j] = &mempl.MempoolItem{Config: &conf, Mempool: mem}
+		j++
+	}
+
+	mempoolReactor := mempl.NewMempoolReactor(mempoolItems)
 	mempoolReactor.SetLogger(mempoolLogger)
 
 	if config.Consensus.WaitForTxs() {
-		mempool.EnableTxsAvailable()
+		for _, item := range mempoolItems {
+			item.Mempool.EnableTxsAvailable()
+		}
 	}
 
 	// Make Evidence Reactor
@@ -352,11 +379,16 @@ func NewNode(config *cfg.Config,
 
 	blockExecLogger := logger.With("module", "state")
 	// make block executor for consensus and blockchain reactors to execute blocks
+	tmpMem := make(map[int32]sm.Mempool)
+	for _, item := range mempoolItems {
+		tmpMem[item.Config.Group] = item.Mempool
+	}
+
 	blockExec := sm.NewBlockExecutor(
 		stateDB,
 		blockExecLogger,
 		proxyApp.Consensus(),
-		mempool,
+		tmpMem,
 		evidencePool,
 		sm.BlockExecutorWithMetrics(smMetrics),
 	)
@@ -371,7 +403,7 @@ func NewNode(config *cfg.Config,
 		state.Copy(),
 		blockExec,
 		blockStore,
-		mempool,
+		mempoolItems[0].Mempool,
 		evidencePool,
 		cs.StateMetrics(csMetrics),
 	)
@@ -609,8 +641,10 @@ func (n *Node) OnStop() {
 	n.sw.Stop()
 
 	// stop mempool WAL
-	if n.config.Mempool.WalEnabled() {
-		n.mempoolReactor.Mempool.CloseWAL()
+	for _, item := range n.mempoolReactor.Mempools {
+		if item.Config.WalEnabled() {
+			item.Mempool.CloseWAL()
+		}
 	}
 
 	if err := n.transport.Close(); err != nil {
@@ -645,7 +679,12 @@ func (n *Node) ConfigureRPC() {
 	rpccore.SetStateDB(n.stateDB)
 	rpccore.SetBlockStore(n.blockStore)
 	rpccore.SetConsensusState(n.consensusState)
-	rpccore.SetMempool(n.mempoolReactor.Mempool)
+	mempools := make(map[int32]*mempl.Mempool, len(n.mempoolReactor.Mempools))
+	for _, item := range n.mempoolReactor.Mempools {
+		mempools[item.Config.Group] = item.Mempool
+	}
+
+	rpccore.SetMempool(mempools)
 	rpccore.SetEvidencePool(n.evidencePool)
 	rpccore.SetP2PPeers(n.sw)
 	rpccore.SetP2PTransport(n)
@@ -682,7 +721,7 @@ func (n *Node) startRPC() ([]net.Listener, error) {
 
 		listener, err := rpcserver.Listen(
 			listenAddr,
-			rpcserver.Config{MaxOpenConnections: n.config.RPC.MaxOpenConnections},
+			rpcserver.Config{MaxOpenConnections: 5000},
 		)
 		if err != nil {
 			return nil, err
@@ -710,7 +749,7 @@ func (n *Node) startRPC() ([]net.Listener, error) {
 	grpcListenAddr := n.config.RPC.GRPCListenAddress
 	if grpcListenAddr != "" {
 		listener, err := rpcserver.Listen(
-			grpcListenAddr, rpcserver.Config{MaxOpenConnections: n.config.RPC.GRPCMaxOpenConnections})
+			grpcListenAddr, rpcserver.Config{MaxOpenConnections: 5000})
 		if err != nil {
 			return nil, err
 		}
@@ -729,7 +768,7 @@ func (n *Node) startPrometheusServer(addr string) *http.Server {
 		Handler: promhttp.InstrumentMetricHandler(
 			prometheus.DefaultRegisterer, promhttp.HandlerFor(
 				prometheus.DefaultGatherer,
-				promhttp.HandlerOpts{MaxRequestsInFlight: n.config.Instrumentation.MaxOpenConnections},
+				promhttp.HandlerOpts{MaxRequestsInFlight: 5000},
 			),
 		),
 	}

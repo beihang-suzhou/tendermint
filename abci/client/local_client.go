@@ -18,7 +18,7 @@ type localClient struct {
 
 	mtx *sync.Mutex
 	types.Application
-	Callback
+	calback map[int32]Callback
 }
 
 func NewLocalClient(mtx *sync.Mutex, app types.Application) *localClient {
@@ -29,13 +29,14 @@ func NewLocalClient(mtx *sync.Mutex, app types.Application) *localClient {
 		mtx:         mtx,
 		Application: app,
 	}
+	cli.calback = make(map[int32]Callback)
 	cli.BaseService = *cmn.NewBaseService(nil, "localClient", cli)
 	return cli
 }
 
-func (app *localClient) SetResponseCallback(cb Callback) {
+func (app *localClient) SetResponseCallback(group int32, cb Callback) {
 	app.mtx.Lock()
-	app.Callback = cb
+	app.calback[group] = cb
 	app.mtx.Unlock()
 }
 
@@ -81,24 +82,24 @@ func (app *localClient) SetOptionAsync(req types.RequestSetOption) *ReqRes {
 	)
 }
 
-func (app *localClient) DeliverTxAsync(tx []byte) *ReqRes {
+func (app *localClient) DeliverTxAsync(tx []byte, group int32) *ReqRes {
 	app.mtx.Lock()
 	defer app.mtx.Unlock()
 
 	res := app.Application.DeliverTx(tx)
 	return app.callback(
-		types.ToRequestDeliverTx(tx),
+		types.ToRequestDeliverTx(tx, group),
 		types.ToResponseDeliverTx(res),
 	)
 }
 
-func (app *localClient) CheckTxAsync(tx []byte) *ReqRes {
+func (app *localClient) CheckTxAsync(tx []byte, group int32) *ReqRes {
 	app.mtx.Lock()
 	defer app.mtx.Unlock()
 
 	res := app.Application.CheckTx(tx)
 	return app.callback(
-		types.ToRequestCheckTx(tx),
+		types.ToRequestCheckTx(tx, group),
 		types.ToResponseCheckTx(res),
 	)
 }
@@ -184,7 +185,7 @@ func (app *localClient) SetOptionSync(req types.RequestSetOption) (*types.Respon
 	return &res, nil
 }
 
-func (app *localClient) DeliverTxSync(tx []byte) (*types.ResponseDeliverTx, error) {
+func (app *localClient) DeliverTxSync(tx []byte, group int32) (*types.ResponseDeliverTx, error) {
 	app.mtx.Lock()
 	defer app.mtx.Unlock()
 
@@ -192,7 +193,7 @@ func (app *localClient) DeliverTxSync(tx []byte) (*types.ResponseDeliverTx, erro
 	return &res, nil
 }
 
-func (app *localClient) CheckTxSync(tx []byte) (*types.ResponseCheckTx, error) {
+func (app *localClient) CheckTxSync(tx []byte, group int32) (*types.ResponseCheckTx, error) {
 	app.mtx.Lock()
 	defer app.mtx.Unlock()
 
@@ -243,7 +244,12 @@ func (app *localClient) EndBlockSync(req types.RequestEndBlock) (*types.Response
 //-------------------------------------------------------
 
 func (app *localClient) callback(req *types.Request, res *types.Response) *ReqRes {
-	app.Callback(req, res)
+	if app.calback != nil && len(app.calback) != 0 {
+		for _, item := range app.calback {
+			item(req, res)
+		}
+	}
+
 	return newLocalReqRes(req, res)
 }
 

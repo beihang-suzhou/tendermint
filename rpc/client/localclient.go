@@ -64,24 +64,24 @@ func (Local) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts ABCIQuery
 	return core.ABCIQuery(path, data, opts.Height, opts.Prove)
 }
 
-func (Local) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
-	return core.BroadcastTxCommit(tx)
+func (Local) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
+	return core.BroadcastTxCommit(tx, group)
 }
 
-func (Local) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return core.BroadcastTxAsync(tx)
+func (Local) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	return core.BroadcastTxAsync(tx, group)
 }
 
-func (Local) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return core.BroadcastTxSync(tx)
+func (Local) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	return core.BroadcastTxSync(tx, group)
 }
 
-func (Local) UnconfirmedTxs(limit int) (*ctypes.ResultUnconfirmedTxs, error) {
-	return core.UnconfirmedTxs(limit)
+func (Local) UnconfirmedTxs(limit int, group int32) (*ctypes.ResultUnconfirmedTxs, error) {
+	return core.UnconfirmedTxs(limit, group)
 }
 
-func (Local) NumUnconfirmedTxs() (*ctypes.ResultUnconfirmedTxs, error) {
-	return core.NumUnconfirmedTxs()
+func (Local) NumUnconfirmedTxs(group int32) (*ctypes.ResultUnconfirmedTxs, error) {
+	return core.NumUnconfirmedTxs(group)
 }
 
 func (Local) NetInfo() (*ctypes.ResultNetInfo, error) {

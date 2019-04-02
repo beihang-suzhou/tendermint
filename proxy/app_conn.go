@@ -9,22 +9,22 @@ import (
 // Enforce which abci msgs can be sent on a connection at the type level
 
 type AppConnConsensus interface {
-	SetResponseCallback(abcicli.Callback)
+	SetResponseCallback(int32, abcicli.Callback)
 	Error() error
 
 	InitChainSync(types.RequestInitChain) (*types.ResponseInitChain, error)
 
 	BeginBlockSync(types.RequestBeginBlock) (*types.ResponseBeginBlock, error)
-	DeliverTxAsync(tx []byte) *abcicli.ReqRes
+	DeliverTxAsync(tx []byte, group int32) *abcicli.ReqRes
 	EndBlockSync(types.RequestEndBlock) (*types.ResponseEndBlock, error)
 	CommitSync() (*types.ResponseCommit, error)
 }
 
 type AppConnMempool interface {
-	SetResponseCallback(abcicli.Callback)
+	SetResponseCallback(int32, abcicli.Callback)
 	Error() error
 
-	CheckTxAsync(tx []byte) *abcicli.ReqRes
+	CheckTxAsync(tx []byte, group int32) *abcicli.ReqRes
 
 	FlushAsync() *abcicli.ReqRes
 	FlushSync() error
@@ -53,8 +53,8 @@ func NewAppConnConsensus(appConn abcicli.Client) *appConnConsensus {
 	}
 }
 
-func (app *appConnConsensus) SetResponseCallback(cb abcicli.Callback) {
-	app.appConn.SetResponseCallback(cb)
+func (app *appConnConsensus) SetResponseCallback(group int32, cb abcicli.Callback) {
+	app.appConn.SetResponseCallback(group, cb)
 }
 
 func (app *appConnConsensus) Error() error {
@@ -69,8 +69,8 @@ func (app *appConnConsensus) BeginBlockSync(req types.RequestBeginBlock) (*types
 	return app.appConn.BeginBlockSync(req)
 }
 
-func (app *appConnConsensus) DeliverTxAsync(tx []byte) *abcicli.ReqRes {
-	return app.appConn.DeliverTxAsync(tx)
+func (app *appConnConsensus) DeliverTxAsync(tx []byte, group int32) *abcicli.ReqRes {
+	return app.appConn.DeliverTxAsync(tx, group)
 }
 
 func (app *appConnConsensus) EndBlockSync(req types.RequestEndBlock) (*types.ResponseEndBlock, error) {
@@ -94,8 +94,8 @@ func NewAppConnMempool(appConn abcicli.Client) *appConnMempool {
 	}
 }
 
-func (app *appConnMempool) SetResponseCallback(cb abcicli.Callback) {
-	app.appConn.SetResponseCallback(cb)
+func (app *appConnMempool) SetResponseCallback(group int32, cb abcicli.Callback) {
+	app.appConn.SetResponseCallback(group, cb)
 }
 
 func (app *appConnMempool) Error() error {
@@ -110,8 +110,8 @@ func (app *appConnMempool) FlushSync() error {
 	return app.appConn.FlushSync()
 }
 
-func (app *appConnMempool) CheckTxAsync(tx []byte) *abcicli.ReqRes {
-	return app.appConn.CheckTxAsync(tx)
+func (app *appConnMempool) CheckTxAsync(tx []byte, group int32) *abcicli.ReqRes {
+	return app.appConn.CheckTxAsync(tx, group)
 }
 
 //------------------------------------------------

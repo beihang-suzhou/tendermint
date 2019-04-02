@@ -178,8 +178,9 @@ type ResultTxSearch struct {
 
 // List of mempool txs
 type ResultUnconfirmedTxs struct {
-	N   int        `json:"n_txs"`
-	Txs []types.Tx `json:"txs"`
+	N     int        `json:"n_txs"`
+	Txs   []types.Tx `json:"txs"`
+	Group int32      `json:"group"`
 }
 
 // Info abci msg

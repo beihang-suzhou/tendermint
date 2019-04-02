@@ -75,6 +75,7 @@ func (app *KVStoreApplication) Info(req types.RequestInfo) (resInfo types.Respon
 	}
 }
 
+// need modify
 // tx is either "key=value" or just arbitrary bytes
 func (app *KVStoreApplication) DeliverTx(tx []byte) types.ResponseDeliverTx {
 	var key, value []byte

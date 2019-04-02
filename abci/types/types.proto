@@ -294,6 +294,7 @@ message Validator {
 message ValidatorUpdate {
   PubKey pub_key = 1 [(gogoproto.nullable)=false];
   int64 power = 2;
+  int32 group = 3;
 }
 
 // VoteInfo

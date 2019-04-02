@@ -8,7 +8,10 @@ import (
 )
 
 func UnsafeFlushMempool() (*ctypes.ResultUnsafeFlushMempool, error) {
-	mempool.Flush()
+	for _, item := range mempool {
+		item.Flush()
+	}
+
 	return &ctypes.ResultUnsafeFlushMempool{}, nil
 }
 

@@ -185,7 +185,7 @@ func NewMempool(
 	} else {
 		mempool.cache = nopTxCache{}
 	}
-	proxyAppConn.SetResponseCallback(mempool.resCb)
+	proxyAppConn.SetResponseCallback(mempool.config.Group, mempool.resCb)
 	for _, option := range options {
 		option(mempool)
 	}
@@ -349,7 +349,7 @@ func (mem *Mempool) CheckTx(tx types.Tx, cb func(*abci.Response)) (err error) {
 	if err = mem.proxyAppConn.Error(); err != nil {
 		return err
 	}
-	reqRes := mem.proxyAppConn.CheckTxAsync(tx)
+	reqRes := mem.proxyAppConn.CheckTxAsync(tx, mem.config.Group)
 	if cb != nil {
 		reqRes.SetCallback(cb)
 	}
@@ -371,17 +371,23 @@ func (mem *Mempool) resCb(req *abci.Request, res *abci.Response) {
 func (mem *Mempool) resCbNormal(req *abci.Request, res *abci.Response) {
 	switch r := res.Value.(type) {
 	case *abci.Response_CheckTx:
+		if req.GetCheckTx().Group != mem.config.Group {
+			return
+		}
+
 		tx := req.GetCheckTx().Tx
 		var postCheckErr error
 		if mem.postCheck != nil {
 			postCheckErr = mem.postCheck(tx, r.CheckTx)
 		}
+
 		if (r.CheckTx.Code == abci.CodeTypeOK) && postCheckErr == nil {
 			memTx := &mempoolTx{
 				height:    mem.height,
 				gasWanted: r.CheckTx.GasWanted,
 				tx:        tx,
 			}
+
 			mem.txs.PushBack(memTx)
 			mem.logger.Info("Added good transaction",
 				"tx", TxID(tx),
@@ -406,6 +412,10 @@ func (mem *Mempool) resCbNormal(req *abci.Request, res *abci.Response) {
 func (mem *Mempool) resCbRecheck(req *abci.Request, res *abci.Response) {
 	switch r := res.Value.(type) {
 	case *abci.Response_CheckTx:
+		if req.GetCheckTx().Group != mem.config.Group {
+			return
+		}
+
 		tx := req.GetCheckTx().Tx
 		memTx := mem.recheckCursor.Value.(*mempoolTx)
 		if !bytes.Equal(tx, memTx.tx) {
@@ -619,7 +629,7 @@ func (mem *Mempool) recheckTxs(txs []types.Tx) {
 	// Push txs to proxyAppConn
 	// NOTE: resCb() may be called concurrently.
 	for _, tx := range txs {
-		mem.proxyAppConn.CheckTxAsync(tx)
+		mem.proxyAppConn.CheckTxAsync(tx, mem.config.Group)
 	}
 	mem.proxyAppConn.FlushAsync()
 }

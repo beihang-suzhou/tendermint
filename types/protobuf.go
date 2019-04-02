@@ -232,7 +232,7 @@ func (pb2tm) ValidatorUpdates(vals []abci.ValidatorUpdate) ([]*Validator, error)
 		if err != nil {
 			return nil, err
 		}
-		tmVals[i] = NewValidator(pub, v.Power)
+		tmVals[i] = NewValidator(pub, v.Power, v.Group)
 	}
 	return tmVals, nil
 }
