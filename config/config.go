@@ -31,7 +31,10 @@ var (
 	DefaultTendermintDir = ".tendermint"
 	defaultConfigDir     = "config"
 	defaultDataDir       = "data"
-
+	//defaultConfigDir     = "G:/root/.bschaind0/config/"
+	//defaultDataDir       = "G:/root/.bschaind0/data"
+	//defaultConfigDir     = "G:/.bschaind/config/"
+	//defaultDataDir       = "G:/.bschaind/data"
 	defaultConfigFileName  = "config.toml"
 	defaultGenesisJSONName = "genesis.json"
 

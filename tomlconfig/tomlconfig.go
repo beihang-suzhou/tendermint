@@ -101,6 +101,9 @@ func TomlDefaultConfig(confpath string) *TomlConfig {
 	//spew.Dump(conf)
 	return conf
 }
+
+
+
 //改为toml方式读取时，此处需要注释掉
 // TestConfig returns a configuration that can be used for testing
 //func TestConfig() *Config {
