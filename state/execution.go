@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"github.com/tendermint/tendermint/mempool"
 	"time"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -93,7 +94,30 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 	maxDataBytes := types.MaxDataBytes(maxBytes, state.Validators.Size(), len(evidence))
 	// need to modify
 	// 选择mempool的策略
-	txs := blockExec.mempool[0].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
+	var ts int64   //时间戳
+	var index int32 =0  //mempool序号
+	fmt.Printf("内存池数量: %d\n", len(blockExec.mempool))
+	//获取当前节点所有mempool
+	for k, mem := range blockExec.mempool{
+		m,ok:=mem.(*mempool.Mempool)
+		if ok{
+			if(k==1){
+				ts=m.GetFirstTs()
+				index=k
+				fmt.Printf("当前内存池编号：%d的最早时间戳：%d\n",k,m.GetFirstTs())
+			}
+			if(k!=1){
+				fmt.Printf("当前内存池编号：%d的最早时间戳：%d\n",k,m.GetFirstTs())
+				if (m.GetFirstTs()<=ts){  //选出最小时间戳
+					ts=m.GetFirstTs()
+					index=k
+				}
+			}
+		}
+	}
+	fmt.Printf("选择内存池：%d\n",index)
+	txs := blockExec.mempool[index].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
+	//txs := blockExec.mempool[0].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
 	return state.MakeBlock(height, txs, commit, evidence, proposerAddr)
 }
 

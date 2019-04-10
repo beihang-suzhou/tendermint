@@ -134,7 +134,6 @@ func TxID(tx []byte) string {
 // can be efficiently accessed by multiple concurrent readers.
 type Mempool struct {
 	config *cfg.MempoolConfig
-
 	proxyMtx             sync.Mutex
 	proxyAppConn         proxy.AppConnMempool
 	txs                  *clist.CList    // concurrent linked-list of good txs
@@ -146,16 +145,12 @@ type Mempool struct {
 	txsAvailable         chan struct{} // fires once for each height, when the mempool is not empty
 	preCheck             PreCheckFunc
 	postCheck            PostCheckFunc
-
 	// Keep a cache of already-seen txs.
 	// This reduces the pressure on the proxyApp.
 	cache txCache
-
 	// A log of mempool txs
 	wal *auto.AutoFile
-
 	logger log.Logger
-
 	metrics *Metrics
 }
 
@@ -487,12 +482,10 @@ func (mem *Mempool) notifyTxsAvailable() {
 func (mem *Mempool) ReapMaxBytesMaxGas(maxBytes, maxGas int64) types.Txs {
 	mem.proxyMtx.Lock()
 	defer mem.proxyMtx.Unlock()
-
 	for atomic.LoadInt32(&mem.rechecking) > 0 {
 		// TODO: Something better?
 		time.Sleep(time.Millisecond * 10)
 	}
-
 	var totalBytes int64
 	var totalGas int64
 	// TODO: we will get a performance boost if we have a good estimate of avg
@@ -634,6 +627,14 @@ func (mem *Mempool) recheckTxs(txs []types.Tx) {
 	mem.proxyAppConn.FlushAsync()
 }
 
+//获取当前内存缓冲池的最早的tx的时间戳
+func (mem *Mempool) GetFirstTs() int64 {
+	v,ok := (mem.cache).(*mapTxCache)  //断言
+	if ok{
+		return v.GetFirstTsInCache()
+	}
+	return 0
+}
 //--------------------------------------------------------------------------------
 
 // mempoolTx is a transaction that successfully ran
@@ -661,8 +662,13 @@ type txCache interface {
 type mapTxCache struct {
 	mtx  sync.Mutex
 	size int
-	map_ map[[sha256.Size]byte]*list.Element
+	map_ map[[sha256.Size]byte]*list.Element  //<txHash , tx>
 	list *list.List // to remove oldest tx when cache gets too big
+	//时间戳
+	//增加一个tx时间戳双向链表
+	timestamplist *list.List
+	//增加时间戳map: <txHash , 时间戳>
+	map_ts map[[sha256.Size]byte]*list.Element
 }
 
 var _ txCache = (*mapTxCache)(nil)
@@ -673,6 +679,9 @@ func newMapTxCache(cacheSize int) *mapTxCache {
 		size: cacheSize,
 		map_: make(map[[sha256.Size]byte]*list.Element, cacheSize),
 		list: list.New(),
+		//时间戳
+		map_ts: make(map[[sha256.Size]byte]*list.Element, cacheSize),
+		timestamplist:list.New(),
 	}
 }
 
@@ -681,32 +690,50 @@ func (cache *mapTxCache) Reset() {
 	cache.mtx.Lock()
 	cache.map_ = make(map[[sha256.Size]byte]*list.Element, cache.size)
 	cache.list.Init()
+    //时间戳
+	cache.map_ts = make(map[[sha256.Size]byte]*list.Element, cache.size)
+	cache.timestamplist.Init()
 	cache.mtx.Unlock()
 }
 
 // Push adds the given tx to the cache and returns true. It returns false if tx
 // is already in the cache.
+
 func (cache *mapTxCache) Push(tx types.Tx) bool {
 	cache.mtx.Lock()
 	defer cache.mtx.Unlock()
-
 	// Use the tx hash in the cache
-	txHash := sha256.Sum256(tx)
-	if moved, exists := cache.map_[txHash]; exists {
-		cache.list.MoveToBack(moved)
+	txHash := sha256.Sum256(tx) //根据tx计算hash
+	txTs :=time.Now().UnixNano() //tx进入内存池的时间
+	fmt.Printf("tx进入内存池的时间%d\n",txTs)
+	if moved, exists := cache.map_[txHash]; exists {//若该txHash在map_中，将该tx添加到list尾部
+		cache.list.MoveToBack(moved) //MoveToBack将元素e移动到链表的最后一个位置，如果e不是l的元素，l不会被修改。
 		return false
 	}
-
+	//时间戳
+	if moved, exists := cache.map_ts[txHash]; exists {//若该txHash在map_中，将该tx添加到list尾部
+		cache.timestamplist.MoveToBack(moved) //MoveToBack将元素e移动到链表的最后一个位置，如果e不是l的元素，l不会被修改。
+		return false
+	}
 	if cache.list.Len() >= cache.size {
-		popped := cache.list.Front()
+		popped := cache.list.Front() //获取交易链表第一个元素；Front返回链表第一个元素或nil。
 		poppedTxHash := popped.Value.([sha256.Size]byte)
-		delete(cache.map_, poppedTxHash)
+		delete(cache.map_, poppedTxHash)//将交易链表第一个元素从map中删除；delete按照指定的键将元素从映射中删除。若m为nil或无此元素，delete不进行操作。
+		//时间戳
+		popped_ts := cache.timestamplist.Front() //获取时间戳链表第一个元素；Front返回链表第一个元素或nil。
+		poppedTxHash_ts := popped_ts.Value.([sha256.Size]byte)
+		delete(cache.map_ts, poppedTxHash_ts)//将时间戳链表第一个元素从map中删除；delete按照指定的键将元素从映射中删除。若m为nil或无此元素，delete不进行操作。
 		if popped != nil {
-			cache.list.Remove(popped)
+			cache.list.Remove(popped)//将交易链表第一个元素删除；Remove删除链表中的元素e，并返回e.Value。
+			//时间戳
+			cache.timestamplist.Remove(popped_ts) //时间戳链表第一个时间戳删除；Remove删除链表中的元素e，并返回e.Value。
 		}
 	}
-	cache.list.PushBack(txHash)
-	cache.map_[txHash] = cache.list.Back()
+	cache.list.PushBack(txHash) //将该元素插入到交易链表最后；PushBack将一个值为v的新元素插入链表的最后一个位置，返回生成的新元素。
+	cache.map_[txHash] = cache.list.Back() //将该元素存入到map<txHash,tx>中；mapBack返回链表最后一个元素或nil。
+	//时间戳
+	cache.timestamplist.PushBack(txTs)//将该元素插入到时间戳链表最后；PushBack将一个值为v的新元素插入链表的最后一个位置，返回生成的新元素。
+	cache.map_ts[txHash] = cache.timestamplist.Back()//将该元素存入到map<txHash,时间戳>中；mapBack返回链表最后一个元素或nil。
 	return true
 }
 
@@ -716,10 +743,14 @@ func (cache *mapTxCache) Remove(tx types.Tx) {
 	txHash := sha256.Sum256(tx)
 	popped := cache.map_[txHash]
 	delete(cache.map_, txHash)
+	//时间戳
+	popped_ts := cache.map_ts[txHash]
+	delete(cache.map_ts, txHash)
 	if popped != nil {
 		cache.list.Remove(popped)
+		//时间戳
+		cache.timestamplist.Remove(popped_ts)
 	}
-
 	cache.mtx.Unlock()
 }
 
@@ -730,3 +761,12 @@ var _ txCache = (*nopTxCache)(nil)
 func (nopTxCache) Reset()             {}
 func (nopTxCache) Push(types.Tx) bool { return true }
 func (nopTxCache) Remove(types.Tx)    {}
+
+//获取当前内存缓冲池的最早的tx的时间戳
+func (cache *mapTxCache) GetFirstTsInCache() int64 {
+	v,ok:= cache.timestamplist.Front().Value.(int64)
+	if ok {
+		return v
+	}
+	return 0
+}

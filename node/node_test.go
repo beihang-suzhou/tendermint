@@ -221,7 +221,7 @@ func TestCreateProposalBlock(t *testing.T) {
 	state.ConsensusParams.BlockSize.MaxBytes = int64(maxBytes)
 	proposerAddr, _ := state.Validators.GetByIndex(0)
 
-	// Make Mempool
+	// Make Mempool01
 	memplMetrics := mempl.PrometheusMetrics("node_test")
 	mempool := mempl.NewMempool(
 		config.Mempool,
@@ -232,6 +232,27 @@ func TestCreateProposalBlock(t *testing.T) {
 		mempl.WithPostCheck(sm.TxPostCheck(state)),
 	)
 	mempool.SetLogger(logger)
+	// Make Mempool02
+	mempool02 := mempl.NewMempool(
+		config.Mempool,
+		proxyApp.Mempool(),
+		state.LastBlockHeight,
+		mempl.WithMetrics(memplMetrics),
+		mempl.WithPreCheck(sm.TxPreCheck(state)),
+		mempl.WithPostCheck(sm.TxPostCheck(state)),
+	)
+	mempool02.SetLogger(logger)
+
+	// Make Mempool03
+	mempool03 := mempl.NewMempool(
+		config.Mempool,
+		proxyApp.Mempool(),
+		state.LastBlockHeight,
+		mempl.WithMetrics(memplMetrics),
+		mempl.WithPreCheck(sm.TxPreCheck(state)),
+		mempl.WithPostCheck(sm.TxPostCheck(state)),
+	)
+	mempool02.SetLogger(logger)
 
 	// Make EvidencePool
 	types.RegisterMockEvidencesGlobal() // XXX!
@@ -259,11 +280,30 @@ func TestCreateProposalBlock(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	// Mempool02
+	txLength02 := 1000
+	for i := 0; i < maxBytes/txLength02; i++ {
+		tx := cmn.RandBytes(txLength02)
+		err := mempool02.CheckTx(tx, nil)
+		assert.NoError(t, err)
+	}
+
+	// Mempool03
+	txLength03 := 1000
+	for i := 0; i < maxBytes/txLength03; i++ {
+		tx := cmn.RandBytes(txLength03)
+		err := mempool03.CheckTx(tx, nil)
+		assert.NoError(t, err)
+	}
+    mempoolMap := make(map[int32]sm.Mempool)
+	mempoolMap[1] = mempool
+	mempoolMap[2] = mempool02
+	mempoolMap[3] = mempool03
 	blockExec := sm.NewBlockExecutor(
 		stateDB,
 		logger,
 		proxyApp.Consensus(),
-		mempool,
+		mempoolMap,
 		evidencePool,
 	)
 
@@ -288,7 +328,9 @@ func state(nVals int, height int64) (sm.State, dbm.DB) {
 			pk.PubKey(),
 			1000,
 			fmt.Sprintf("test%d", i),
+		    0,
 		}
+
 	}
 	s, _ := sm.MakeGenesisState(&types.GenesisDoc{
 		ChainID:    "test-chain",
@@ -296,7 +338,7 @@ func state(nVals int, height int64) (sm.State, dbm.DB) {
 		AppHash:    nil,
 	})
 
-	// save validators to db for 2 heights
+	// save validators to db for 2 heights.
 	stateDB := dbm.NewMemDB()
 	sm.SaveState(stateDB, s)
 
