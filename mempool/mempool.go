@@ -632,6 +632,7 @@ func (mem *Mempool) recheckTxs(txs []types.Tx) {
 func (mem *Mempool) GetFirstTs() int64 {
 	v,ok := (mem.cache).(*mapTxCache)  //断言
 	if ok{
+		fmt.Println("最早时间戳",v.GetFirstTsInCache())
 		return v.GetFirstTsInCache()
 	}
 	return 0

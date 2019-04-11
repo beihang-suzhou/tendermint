@@ -212,11 +212,9 @@ func TestCreateProposalBlock(t *testing.T) {
 	err := proxyApp.Start()
 	require.Nil(t, err)
 	defer proxyApp.Stop()
-
 	logger := log.TestingLogger()
-
 	var height int64 = 1
-	state, stateDB := state(1, height)
+	state, stateDB := statefunc(1, height)
 	maxBytes := 16384
 	state.ConsensusParams.BlockSize.MaxBytes = int64(maxBytes)
 	proposerAddr, _ := state.Validators.GetByIndex(0)
@@ -232,19 +230,9 @@ func TestCreateProposalBlock(t *testing.T) {
 		mempl.WithPostCheck(sm.TxPostCheck(state)),
 	)
 	mempool.SetLogger(logger)
+
 	// Make Mempool02
 	mempool02 := mempl.NewMempool(
-		config.Mempool,
-		proxyApp.Mempool(),
-		state.LastBlockHeight,
-		mempl.WithMetrics(memplMetrics),
-		mempl.WithPreCheck(sm.TxPreCheck(state)),
-		mempl.WithPostCheck(sm.TxPostCheck(state)),
-	)
-	mempool02.SetLogger(logger)
-
-	// Make Mempool03
-	mempool03 := mempl.NewMempool(
 		config.Mempool,
 		proxyApp.Mempool(),
 		state.LastBlockHeight,
@@ -288,17 +276,10 @@ func TestCreateProposalBlock(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	// Mempool03
-	txLength03 := 1000
-	for i := 0; i < maxBytes/txLength03; i++ {
-		tx := cmn.RandBytes(txLength03)
-		err := mempool03.CheckTx(tx, nil)
-		assert.NoError(t, err)
-	}
     mempoolMap := make(map[int32]sm.Mempool)
 	mempoolMap[1] = mempool
 	mempoolMap[2] = mempool02
-	mempoolMap[3] = mempool03
+
 	blockExec := sm.NewBlockExecutor(
 		stateDB,
 		logger,
@@ -318,7 +299,7 @@ func TestCreateProposalBlock(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func state(nVals int, height int64) (sm.State, dbm.DB) {
+func statefunc(nVals int, height int64) (sm.State, dbm.DB) {
 	vals := make([]types.GenesisValidator, nVals)
 	for i := 0; i < nVals; i++ {
 		secret := []byte(fmt.Sprintf("test%d", i))
@@ -328,7 +309,7 @@ func state(nVals int, height int64) (sm.State, dbm.DB) {
 			pk.PubKey(),
 			1000,
 			fmt.Sprintf("test%d", i),
-		    0,
+		    int32(i),
 		}
 
 	}
