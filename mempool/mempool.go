@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"container/list"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -705,7 +706,7 @@ func (cache *mapTxCache) Push(tx types.Tx) bool {
 	// Use the tx hash in the cache
 	txHash := sha256.Sum256(tx) //根据tx计算hash
 	txTs :=time.Now().UnixNano() //tx进入内存池的时间
-	fmt.Printf("tx进入内存池的时间%d\n",txTs)
+	fmt.Printf("交易%s进入内存池的时间%d\n",hex.EncodeToString(txHash[:]),txTs)
 	if moved, exists := cache.map_[txHash]; exists {//若该txHash在map_中，将该tx添加到list尾部
 		cache.list.MoveToBack(moved) //MoveToBack将元素e移动到链表的最后一个位置，如果e不是l的元素，l不会被修改。
 		return false
