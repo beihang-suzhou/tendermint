@@ -337,9 +337,9 @@ func NewNode(config *cfg.Config,
 	var i int32
 	var j int32 = 0
 	for i = 0; i < 33; i++ {
-		//if i != 0 && (config.Mempool.Group>>uint32(i-1))&1 == 0 {
-		//	continue
-		//}
+		if i != 0 && (config.Mempool.Group>>uint32(i-1))&1 == 0 {
+			continue
+		}
 		conf := *config.Mempool
 		conf.Group = i
 		mem = mempl.NewMempool(
