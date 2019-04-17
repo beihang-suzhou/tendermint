@@ -178,12 +178,12 @@ func NewNode(config *cfg.Config,
 	dbProvider DBProvider,
 	metricsProvider MetricsProvider,
 	logger log.Logger,groupid ...int64) (*Node, error) {
-	var totalmp int64 //新节点交易池个数
-	if len(groupid) > 0 {
-		totalmp=groupid[0]
-	} else {
-		totalmp=4
-	}
+	//var totalmp int64 //新节点交易池个数
+	//if len(groupid) > 0 {
+	//	totalmp=groupid[0]
+	//} else {
+	//	totalmp=4
+	//}
 	// Get BlockStore
 	blockStoreDB, err := dbProvider(&DBContext{"blockstore", config})
 	if err != nil {
@@ -331,8 +331,8 @@ func NewNode(config *cfg.Config,
 			groupNum++
 		}
 	}
-	//mempoolItems := make([]*mempl.MempoolItem, groupNum)
-	mempoolItems := make([]*mempl.MempoolItem, totalmp)
+	mempoolItems := make([]*mempl.MempoolItem, groupNum)
+	//mempoolItems := make([]*mempl.MempoolItem, totalmp)
 	var mem *mempl.Mempool
 	var i int32
 	var j int32 = 0
