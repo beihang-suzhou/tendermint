@@ -355,13 +355,13 @@ func NewNode(config *cfg.Config,
 			mem.InitWAL() // no need to have the mempool wal during tests
 		}
 
-		//mempoolItems[j] = &mempl.MempoolItem{Config: &conf, Mempool: mem}
-		//j++
-		//注释
-		if j<int32(totalmp){
 		mempoolItems[j] = &mempl.MempoolItem{Config: &conf, Mempool: mem}
 		j++
-	    }
+		//注释
+		//if j<int32(totalmp){
+		//mempoolItems[j] = &mempl.MempoolItem{Config: &conf, Mempool: mem}
+		//j++
+	    //}
 	}
 
 	mempoolReactor := mempl.NewMempoolReactor(mempoolItems)
