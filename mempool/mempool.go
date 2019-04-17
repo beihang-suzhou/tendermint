@@ -637,6 +637,8 @@ func (mem *Mempool) GetFirstTs() int64 {
 	}
 	return 0
 }
+
+
 //--------------------------------------------------------------------------------
 
 // mempoolTx is a transaction that successfully ran

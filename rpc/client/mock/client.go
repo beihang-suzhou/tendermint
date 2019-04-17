@@ -92,15 +92,15 @@ func (c Client) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts client
 }
 
 func (c Client) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
-	return core.BroadcastTxCommit(tx)
+	return core.BroadcastTxCommit(tx,1)
 }
 
 func (c Client) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return core.BroadcastTxAsync(tx)
+	return core.BroadcastTxAsync(tx,1)
 }
 
 func (c Client) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return core.BroadcastTxSync(tx)
+	return core.BroadcastTxSync(tx,1)
 }
 
 func (c Client) NetInfo() (*ctypes.ResultNetInfo, error) {

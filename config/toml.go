@@ -321,15 +321,21 @@ namespace = "{{ .Instrumentation.Namespace }}"
 /****** these are for test settings ***********/
 //改为toml方式读取时，此处需要注释掉
 func ResetTestRoot(testName string) *Config {
+	fmt.Println("testName: ",testName)
+	//return ResetTestRootWithChainID(testName, "")
 	return ResetTestRootWithChainID(testName, "")
 }
 
 func ResetTestRootWithChainID(testName string, chainID string) *Config {
 	// create a unique, concurrency-safe test directory under os.TempDir()
 	rootDir, err := ioutil.TempDir("", fmt.Sprintf("%s-%s_", chainID, testName))
+	fmt.Println("chainID:",chainID)
+	fmt.Println("testName:",testName)
+	fmt.Println("rootDir:",rootDir)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("++++++++++++++++")
 	// ensure config and data subdirs are created
 	if err := cmn.EnsureDir(filepath.Join(rootDir, defaultConfigDir), DefaultDirPerm); err != nil {
 		panic(err)

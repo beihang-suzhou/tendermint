@@ -54,6 +54,7 @@ import (
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
 func BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	fmt.Print("11111111111111111111")
 	if _, ok := mempool[group]; !ok {
 		return nil, errors.New("Mempool group is not exist.")
 	}
@@ -103,7 +104,7 @@ func BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, erro
 // | tx        | Tx   | nil     | true     | The transaction |
 func BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	resCh := make(chan *abci.Response, 1)
-
+																				fmt.Print("222222222222222222222")
 	if _, ok := mempool[group]; !ok {
 		return nil, errors.New("Mempool group is not exist.")
 	}
@@ -173,6 +174,7 @@ func BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
 func BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
+	fmt.Print("333333333333333333333")
 	if _, ok := mempool[group]; !ok {
 		return nil, errors.New("Mempool group is not exist.")
 	}
@@ -282,6 +284,7 @@ func BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommi
 // | limit     | int  | 30      | false    | Maximum number of entries (max: 100) |
 // ```
 func UnconfirmedTxs(limit int, group int32) (*ctypes.ResultUnconfirmedTxs, error) {
+	fmt.Print("44444444444444444444444444")
 	if _, ok := mempool[group]; !ok {
 		return nil, errors.New("Mempool group is not exist.")
 	}
@@ -323,6 +326,7 @@ func UnconfirmedTxs(limit int, group int32) (*ctypes.ResultUnconfirmedTxs, error
 // }
 // ```
 func NumUnconfirmedTxs(group int32) (*ctypes.ResultUnconfirmedTxs, error) {
+	fmt.Print("5555555555555555555555555")
 	if _, ok := mempool[group]; !ok {
 		return nil, errors.New("Mempool group is not exist.")
 	}

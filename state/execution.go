@@ -2,7 +2,7 @@ package state
 
 import (
 	"fmt"
-	"github.com/tendermint/tendermint/mempool"
+	"math/rand"
 	"time"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -94,32 +94,67 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 	maxDataBytes := types.MaxDataBytes(maxBytes, state.Validators.Size(), len(evidence))
 	// need to modify
 	// 选择mempool的策略
-	var ts int64   //时间戳
-	var index int32 =0  //mempool序号
+	//var ts int64   //时间戳
+	//var index int32 =0  //mempool序号
+	//firsttsslice := make([]int64, 0)
 	fmt.Printf("内存池数量: %d\n", len(blockExec.mempool))
-	//获取当前节点所有mempool
-	for k, mem := range blockExec.mempool{
-		m,ok:=mem.(*mempool.Mempool)
-		//fmt.Printf("k %d\n", k)
-		if ok{
-			if(k==0){
-				//fmt.Printf("k=0进入 %d\n", k)
-				ts=m.GetFirstTs()
-				//fmt.Printf("ts时间戳 %d\n", k)
-				index=k
-				fmt.Printf("当前内存池编号：%d , 最早时间戳：%d\n",k,m.GetFirstTs())
-			}
-			if(k!=0){
-				fmt.Printf("当前内存池编号：%d , 最早时间戳：%d\n",k,m.GetFirstTs())
-				if (m.GetFirstTs()<=ts){  //选出最小时间戳
-					ts=m.GetFirstTs()
-					index=k
-				}
-			}
-		}
-	}
-	fmt.Printf("选择内存池：%d\n",index)
-	txs := blockExec.mempool[index].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
+	//获取当前节点所有mempool，i为内存池序号
+	//for i, mem := range blockExec.mempool{
+	//	m,ok:=mem.(*mempool.Mempool)
+	//	if ok{
+	//		if(i==0){
+	//			ts=m.GetFirstTs()
+	//			index=i
+	//			fmt.Printf("当前内存池编号：%d , 该内存池最早时间戳：%d\n",i,m.GetFirstTs())
+	//		}
+	//		if(i!=0){
+	//			fmt.Printf("当前内存池编号：%d , 该内存池最早时间戳：%d\n",i,m.GetFirstTs())
+	//			if (m.GetFirstTs()<=ts){  //选出最小时间戳
+	//				ts=m.GetFirstTs()
+	//				index=i
+	//			}
+	//		}
+	//	}
+	//}
+	//选出最小的
+	//min:=tsslice[0]
+	//for index, value := range tsslice {
+	//	   if  value<=min{
+	//	       min = tsslice[index]
+	//	   }
+	//}
+	//fmt.Printf("最小的的时间戳：%d\n",min)
+
+	//for _, v := range firsttsslice {
+	//	fmt.Println("所有最早时间戳tsslice集合：",v)
+	//}
+    //选出最小时间戳，如果全0则是0
+	//mints := firsttsslice[0]
+	//for i, v := range firsttsslice {
+	//	if  v!= 0 {
+	//		if mints==0{
+	//			mints=firsttsslice[i]
+	//		}else if v<mints{
+	//			mints=firsttsslice[i]
+	//		}
+	//	}
+	//}
+	////根据最小时间戳（非零）去找对应的mempool
+	//for i, mem := range blockExec.mempool{
+	//	m,ok:=mem.(*mempool.Mempool)
+	//	if ok{
+	//		if m.GetFirstTs()==mints{
+	//			index=i
+	//		}
+	//	}
+	//}
+	//fmt.Println("非零时间戳",mints)
+	//fmt.Printf("按时间戳选择打包内存池：%d\n",index)
+
+	randomIndex:=rand.Intn(len(blockExec.mempool))
+	fmt.Printf("随机选择打包内存池：%d\n",randomIndex)
+	txs := blockExec.mempool[int32(randomIndex)].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
+	//txs := blockExec.mempool[index].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
 	//txs := blockExec.mempool[0].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
 	return state.MakeBlock(height, txs, commit, evidence, proposerAddr)
 }

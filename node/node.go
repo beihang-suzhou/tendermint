@@ -177,8 +177,13 @@ func NewNode(config *cfg.Config,
 	genesisDocProvider GenesisDocProvider,
 	dbProvider DBProvider,
 	metricsProvider MetricsProvider,
-	logger log.Logger) (*Node, error) {
-
+	logger log.Logger,groupid ...int64) (*Node, error) {
+	var totalmp int64 //新节点交易池个数
+	if len(groupid) > 0 {
+		totalmp=groupid[0]
+	} else {
+		totalmp=4
+	}
 	// Get BlockStore
 	blockStoreDB, err := dbProvider(&DBContext{"blockstore", config})
 	if err != nil {
@@ -326,17 +331,15 @@ func NewNode(config *cfg.Config,
 			groupNum++
 		}
 	}
-
-	mempoolItems := make([]*mempl.MempoolItem, groupNum)
+	//mempoolItems := make([]*mempl.MempoolItem, groupNum)
+	mempoolItems := make([]*mempl.MempoolItem, totalmp)
 	var mem *mempl.Mempool
-
 	var i int32
 	var j int32 = 0
 	for i = 0; i < 33; i++ {
-		if i != 0 && (config.Mempool.Group>>uint32(i-1))&1 == 0 {
-			continue
-		}
-
+		//if i != 0 && (config.Mempool.Group>>uint32(i-1))&1 == 0 {
+		//	continue
+		//}
 		conf := *config.Mempool
 		conf.Group = i
 		mem = mempl.NewMempool(
@@ -347,14 +350,18 @@ func NewNode(config *cfg.Config,
 			mempl.WithPreCheck(sm.TxPreCheck(state)),
 			mempl.WithPostCheck(sm.TxPostCheck(state)),
 		)
-
 		mem.SetLogger(mempoolLogger)
 		if conf.WalEnabled() {
 			mem.InitWAL() // no need to have the mempool wal during tests
 		}
 
+		//mempoolItems[j] = &mempl.MempoolItem{Config: &conf, Mempool: mem}
+		//j++
+		//注释
+		if j<int32(totalmp){
 		mempoolItems[j] = &mempl.MempoolItem{Config: &conf, Mempool: mem}
 		j++
+	    }
 	}
 
 	mempoolReactor := mempl.NewMempoolReactor(mempoolItems)
