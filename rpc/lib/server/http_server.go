@@ -36,8 +36,8 @@ const (
 	// /broadcast_tx_commit has it's own timeout, which should
 	// be less than the WriteTimeout here.
 	// TODO: use a config instead.
-	ReadTimeout  = 3 * time.Second
-	WriteTimeout = 20 * time.Second
+	ReadTimeout  = 10 * time.Second
+	WriteTimeout = 10 * time.Second
 )
 
 // StartHTTPServer takes a listener and starts an HTTP server with the given handler.

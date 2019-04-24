@@ -82,7 +82,6 @@ func GetConfig() *cfg.Config {
 	if globalConfig == nil {
 		pathname := makePathname()
 		globalConfig = cfg.ResetTestRoot(pathname)
-
 		// and we use random ports to run in parallel
 		tm, rpc, grpc := makeAddrs()
 		globalConfig.P2P.ListenAddress = tm

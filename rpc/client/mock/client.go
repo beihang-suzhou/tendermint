@@ -101,7 +101,7 @@ func (c Client) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadc
 
 func (c Client) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	return core.BroadcastTxSync(tx, group)
-}
+
 
 func (c Client) NetInfo() (*ctypes.ResultNetInfo, error) {
 	return core.NetInfo()
