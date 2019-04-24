@@ -56,12 +56,12 @@ func (Local) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
 	return core.ABCIInfo()
 }
 
-func (c *Local) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return c.ABCIQueryWithOptions(path, data, DefaultABCIQueryOptions)
+func (c *Local) ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return c.ABCIQueryWithOptions(group, path, data, DefaultABCIQueryOptions)
 }
 
-func (Local) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
-	return core.ABCIQuery(path, data, opts.Height, opts.Prove)
+func (Local) ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes, opts ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+	return core.ABCIQuery(group, path, data, opts.Height, opts.Prove)
 }
 
 func (Local) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {

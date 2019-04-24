@@ -26,7 +26,7 @@ func GetWithProof(prt *merkle.ProofRuntime, key []byte, reqHeight int64, node rp
 		return
 	}
 
-	res, err := GetWithProofOptions(prt, "/key", key,
+	res, err := GetWithProofOptions(0, prt, "/key", key,
 		rpcclient.ABCIQueryOptions{Height: int64(reqHeight), Prove: true},
 		node, cert)
 	if err != nil {
@@ -40,7 +40,7 @@ func GetWithProof(prt *merkle.ProofRuntime, key []byte, reqHeight int64, node rp
 
 // GetWithProofOptions is useful if you want full access to the ABCIQueryOptions.
 // XXX Usage of path?  It's not used, and sometimes it's /, sometimes /key, sometimes /store.
-func GetWithProofOptions(prt *merkle.ProofRuntime, path string, key []byte, opts rpcclient.ABCIQueryOptions,
+func GetWithProofOptions(group int32, prt *merkle.ProofRuntime, path string, key []byte, opts rpcclient.ABCIQueryOptions,
 	node rpcclient.Client, cert lite.Verifier) (
 	*ctypes.ResultABCIQuery, error) {
 
@@ -48,7 +48,7 @@ func GetWithProofOptions(prt *merkle.ProofRuntime, path string, key []byte, opts
 		return nil, cmn.NewError("require ABCIQueryOptions.Prove to be true")
 	}
 
-	res, err := node.ABCIQueryWithOptions(path, key, opts)
+	res, err := node.ABCIQueryWithOptions(group, path, key, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -132,6 +132,7 @@ type Header struct {
 	// consensus info
 	EvidenceHash         []byte   `protobuf:"bytes,15,opt,name=EvidenceHash,proto3" json:"EvidenceHash,omitempty"`
 	ProposerAddress      []byte   `protobuf:"bytes,16,opt,name=ProposerAddress,proto3" json:"ProposerAddress,omitempty"`
+	Group                int32    `protobuf:"varint,17,opt,name=group,json=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

@@ -52,12 +52,13 @@ import (
 // | data      | []byte | false   | true     | Data                                           |
 // | height    | int64  | 0       | false    | Height (0 means latest)                        |
 // | prove     | bool   | false   | false    | Includes proof if true                         |
-func ABCIQuery(path string, data cmn.HexBytes, height int64, prove bool) (*ctypes.ResultABCIQuery, error) {
+func ABCIQuery(group int32, path string, data cmn.HexBytes, height int64, prove bool) (*ctypes.ResultABCIQuery, error) {
 	resQuery, err := proxyAppQuery.QuerySync(abci.RequestQuery{
 		Path:   path,
 		Data:   data,
 		Height: height,
 		Prove:  prove,
+		Group:  group,
 	})
 	if err != nil {
 		return nil, err

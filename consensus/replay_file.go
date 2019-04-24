@@ -30,8 +30,8 @@ const (
 // replay messages interactively or all at once
 
 // replay the wal file
-func RunReplayFile(config cfg.BaseConfig, csConfig *cfg.ConsensusConfig, console bool) {
-	consensusState := newConsensusStateForReplay(config, csConfig)
+func RunReplayFile(config cfg.BaseConfig, csConfig *cfg.ConsensusConfig, group int32, console bool) {
+	consensusState := newConsensusStateForReplay(config, csConfig, group)
 
 	if err := consensusState.ReplayFile(csConfig.WalFile(), console); err != nil {
 		cmn.Exit(fmt.Sprintf("Error during consensus replay: %v", err))
@@ -299,7 +299,7 @@ func (pb *playback) replayConsoleLoop() int {
 //--------------------------------------------------------------------------------
 
 // convenience for replay mode
-func newConsensusStateForReplay(config cfg.BaseConfig, csConfig *cfg.ConsensusConfig) *ConsensusState {
+func newConsensusStateForReplay(config cfg.BaseConfig, csConfig *cfg.ConsensusConfig, group int32) *ConsensusState {
 	dbType := dbm.DBBackendType(config.DBBackend)
 	// Get BlockStore
 	blockStoreDB := dbm.NewDB("blockstore", dbType, config.DBDir())
@@ -331,7 +331,8 @@ func newConsensusStateForReplay(config cfg.BaseConfig, csConfig *cfg.ConsensusCo
 
 	handshaker := NewHandshaker(stateDB, state, blockStore, gdoc)
 	handshaker.SetEventBus(eventBus)
-	err = handshaker.Handshake(proxyApp)
+
+	err = handshaker.Handshake(proxyApp, group)
 	if err != nil {
 		cmn.Exit(fmt.Sprintf("Error on handshake: %v", err))
 	}

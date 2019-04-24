@@ -133,6 +133,7 @@ func (state State) IsEmpty() bool {
 func (state State) MakeBlock(
 	height int64,
 	txs []types.Tx,
+	group int32,
 	commit *types.Commit,
 	evidence []types.Evidence,
 	proposerAddress []byte,
@@ -140,7 +141,7 @@ func (state State) MakeBlock(
 
 	// Build base block with block data.
 	block := types.MakeBlock(height, txs, commit, evidence)
-
+	block.Header.Group = group
 	// Set time.
 	var timestamp time.Time
 	if height == 1 {

@@ -233,7 +233,7 @@ func (h *Handshaker) NBlocks() int {
 }
 
 // TODO: retry the handshake/replay if it fails ?
-func (h *Handshaker) Handshake(proxyApp proxy.AppConns) error {
+func (h *Handshaker) Handshake(proxyApp proxy.AppConns, group int32) error {
 
 	// Handshake is done via ABCI Info on the query conn.
 	res, err := proxyApp.Query().InfoSync(proxy.RequestInfo)
@@ -259,7 +259,7 @@ func (h *Handshaker) Handshake(proxyApp proxy.AppConns) error {
 	sm.SaveState(h.stateDB, h.initialState)
 
 	// Replay blocks up to the latest in the blockstore.
-	_, err = h.ReplayBlocks(h.initialState, appHash, blockHeight, proxyApp)
+	_, err = h.ReplayBlocks(h.initialState, appHash, blockHeight, group, proxyApp)
 	if err != nil {
 		return fmt.Errorf("Error on replay: %v", err)
 	}
@@ -278,6 +278,7 @@ func (h *Handshaker) ReplayBlocks(
 	state sm.State,
 	appHash []byte,
 	appBlockHeight int64,
+	group int32,
 	proxyApp proxy.AppConns,
 ) ([]byte, error) {
 	storeBlockHeight := h.store.Height()
@@ -353,7 +354,7 @@ func (h *Handshaker) ReplayBlocks(
 		// Either the app is asking for replay, or we're all synced up.
 		if appBlockHeight < storeBlockHeight {
 			// the app is behind, so replay blocks, but no need to go through WAL (state is already synced to store)
-			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, false)
+			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, group, false)
 
 		} else if appBlockHeight == storeBlockHeight {
 			// We're good!
@@ -366,7 +367,7 @@ func (h *Handshaker) ReplayBlocks(
 		if appBlockHeight < stateBlockHeight {
 			// the app is further behind than it should be, so replay blocks
 			// but leave the last block to go through the WAL
-			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
+			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, group, true)
 
 		} else if appBlockHeight == stateBlockHeight {
 			// We haven't run Commit (both the state and app are one block behind),
@@ -374,7 +375,7 @@ func (h *Handshaker) ReplayBlocks(
 			// NOTE: We could instead use the cs.WAL on cs.Start,
 			// but we'd have to allow the WAL to replay a block that wrote it's #ENDHEIGHT
 			h.logger.Info("Replay last block using real app")
-			state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
+			state, err = h.replayBlock(state, storeBlockHeight, group, proxyApp.Consensus())
 			return state.AppHash, err
 
 		} else if appBlockHeight == storeBlockHeight {
@@ -385,7 +386,7 @@ func (h *Handshaker) ReplayBlocks(
 			}
 			mockApp := newMockProxyApp(appHash, abciResponses)
 			h.logger.Info("Replay last block using mock app")
-			state, err = h.replayBlock(state, storeBlockHeight, mockApp)
+			state, err = h.replayBlock(state, storeBlockHeight, group, mockApp)
 			return state.AppHash, err
 		}
 
@@ -395,7 +396,7 @@ func (h *Handshaker) ReplayBlocks(
 	return nil, nil
 }
 
-func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBlockHeight, storeBlockHeight int64, mutateState bool) ([]byte, error) {
+func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBlockHeight, storeBlockHeight int64, group int32, mutateState bool) ([]byte, error) {
 	// App is further behind than it should be, so we need to replay blocks.
 	// We replay all blocks from appBlockHeight+1.
 	//
@@ -425,7 +426,7 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 
 	if mutateState {
 		// sync the final block
-		state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
+		state, err = h.replayBlock(state, storeBlockHeight, group, proxyApp.Consensus())
 		if err != nil {
 			return nil, err
 		}
@@ -436,12 +437,19 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 }
 
 // ApplyBlock on the proxyApp with the last block.
-func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.AppConnConsensus) (sm.State, error) {
+func (h *Handshaker) replayBlock(state sm.State, height int64, group int32, proxyApp proxy.AppConnConsensus) (sm.State, error) {
 	block := h.store.LoadBlock(height)
 	meta := h.store.LoadBlockMeta(height)
 
+	var i int32
 	mempools := make(map[int32]sm.Mempool)
-	mempools[0] = sm.MockMempool{}
+	for i = 0; i < 33; i++ {
+		if i != 0 && (group>>uint32(i-1))&1 == 0 {
+			continue
+		}
+		mempools[i] = sm.MockMempool{}
+	}
+
 	blockExec := sm.NewBlockExecutor(h.stateDB, h.logger, proxyApp, mempools, sm.MockEvidencePool{})
 	blockExec.SetEventBus(h.eventBus)
 

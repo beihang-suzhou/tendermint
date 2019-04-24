@@ -761,6 +761,7 @@ type RequestQuery struct {
 	Path                 string   `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
 	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
 	Prove                bool     `protobuf:"varint,4,opt,name=prove,proto3" json:"prove,omitempty"`
+	Group                int32    `protobuf:"varint,5,opt,name=group,proto3" json:"prove,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -996,6 +997,7 @@ func (m *RequestDeliverTx) GetTx() []byte {
 
 type RequestEndBlock struct {
 	Height               int64    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	Group               int32    `protobuf:"varint,1,opt,name=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -2651,6 +2653,7 @@ type Header struct {
 	// consensus info
 	EvidenceHash         []byte   `protobuf:"bytes,15,opt,name=evidence_hash,json=evidenceHash,proto3" json:"evidence_hash,omitempty"`
 	ProposerAddress      []byte   `protobuf:"bytes,16,opt,name=proposer_address,json=proposerAddress,proto3" json:"proposer_address,omitempty"`
+	Group                int32    `protobuf:"varint,17,opt,name=group,json=group,proto3" json:"group,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

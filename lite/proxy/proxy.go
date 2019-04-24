@@ -74,7 +74,7 @@ func RPCRoutes(c rpcclient.Client) map[string]*rpcserver.RPCFunc {
 		"broadcast_tx_async":  rpcserver.NewRPCFunc(c.BroadcastTxAsync, "tx,group"),
 
 		// abci API
-		"abci_query": rpcserver.NewRPCFunc(c.ABCIQuery, "path,data,prove"),
+		"abci_query": rpcserver.NewRPCFunc(c.ABCIQuery, "group,path,data,prove"),
 		"abci_info":  rpcserver.NewRPCFunc(c.ABCIInfo, ""),
 	}
 }

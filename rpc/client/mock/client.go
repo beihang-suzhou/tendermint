@@ -83,24 +83,24 @@ func (c Client) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
 	return core.ABCIInfo()
 }
 
-func (c Client) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return c.ABCIQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
+func (c Client) ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return c.ABCIQueryWithOptions(group, path, data, client.DefaultABCIQueryOptions)
 }
 
-func (c Client) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
-	return core.ABCIQuery(path, data, opts.Height, opts.Prove)
+func (c Client) ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+	return core.ABCIQuery(group, path, data, opts.Height, opts.Prove)
 }
 
-func (c Client) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
-	return core.BroadcastTxCommit(tx)
+func (c Client) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
+	return core.BroadcastTxCommit(tx, group)
 }
 
-func (c Client) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return core.BroadcastTxAsync(tx)
+func (c Client) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	return core.BroadcastTxAsync(tx, group)
 }
 
-func (c Client) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	return core.BroadcastTxSync(tx)
+func (c Client) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
+	return core.BroadcastTxSync(tx, group)
 }
 
 func (c Client) NetInfo() (*ctypes.ResultNetInfo, error) {

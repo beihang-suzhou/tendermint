@@ -36,16 +36,16 @@ func SecureClient(c rpcclient.Client, cert *lite.DynamicVerifier) Wrapper {
 }
 
 // ABCIQueryWithOptions exposes all options for the ABCI query and verifies the returned proof
-func (w Wrapper) ABCIQueryWithOptions(path string, data cmn.HexBytes,
+func (w Wrapper) ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes,
 	opts rpcclient.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
 
-	res, err := GetWithProofOptions(w.prt, path, data, opts, w.Client, w.cert)
+	res, err := GetWithProofOptions(group, w.prt, path, data, opts, w.Client, w.cert)
 	return res, err
 }
 
 // ABCIQuery uses default options for the ABCI query and verifies the returned proof
-func (w Wrapper) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return w.ABCIQueryWithOptions(path, data, rpcclient.DefaultABCIQueryOptions)
+func (w Wrapper) ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return w.ABCIQueryWithOptions(group, path, data, rpcclient.DefaultABCIQueryOptions)
 }
 
 // Tx queries for a given tx and verifies the proof if it was requested

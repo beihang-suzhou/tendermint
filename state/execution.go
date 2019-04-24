@@ -93,8 +93,16 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 	maxDataBytes := types.MaxDataBytes(maxBytes, state.Validators.Size(), len(evidence))
 	// need to modify
 	// 选择mempool的策略
-	txs := blockExec.mempool[0].ReapMaxBytesMaxGas(maxDataBytes, maxGas)
-	return state.MakeBlock(height, txs, commit, evidence, proposerAddr)
+	var txs types.Txs
+	var group int32 = 0
+	for key, item := range blockExec.mempool {
+		txs = item.ReapMaxBytesMaxGas(maxDataBytes, maxGas)
+		if txs != nil && len(txs) != 0 {
+			group = key
+			break
+		}
+	}
+	return state.MakeBlock(height, txs, group, commit, evidence, proposerAddr)
 }
 
 // ValidateBlock validates the given block against the given state.
@@ -186,12 +194,13 @@ func (blockExec *BlockExecutor) Commit(
 	state State,
 	block *types.Block,
 ) ([]byte, error) {
-	blockExec.mempool[0].Lock()
-	defer blockExec.mempool[0].Unlock()
+
+	blockExec.mempool[block.Header.Group].Lock()
+	defer blockExec.mempool[block.Header.Group].Unlock()
 
 	// while mempool is Locked, flush to ensure all async requests have completed
 	// in the ABCI app before Commit.
-	err := blockExec.mempool[0].FlushAppConn()
+	err := blockExec.mempool[block.Header.Group].FlushAppConn()
 	if err != nil {
 		blockExec.logger.Error("Client error during mempool.FlushAppConn", "err", err)
 		return nil, err
@@ -216,7 +225,7 @@ func (blockExec *BlockExecutor) Commit(
 	)
 
 	// Update mempool.
-	err = blockExec.mempool[0].Update(
+	err = blockExec.mempool[block.Header.Group].Update(
 		block.Height,
 		block.Txs,
 		TxPreCheck(state),
@@ -247,6 +256,12 @@ func execBlockOnProxyApp(
 	proxyCb := func(req *abci.Request, res *abci.Response) {
 		switch r := res.Value.(type) {
 		case *abci.Response_DeliverTx:
+			fmt.Println("test deliery___")
+			fmt.Println(block.Group)
+			req := req.Value.(*abci.Request_DeliverTx)
+			if req.DeliverTx.Group != block.Group {
+				break
+			}
 			// TODO: make use of res.Log
 			// TODO: make use of this info
 			// Blocks may include invalid txs.
@@ -261,6 +276,8 @@ func execBlockOnProxyApp(
 			txIndex++
 		}
 	}
+	fmt.Println("excuse block__")
+	fmt.Println(block.Group)
 	proxyAppConn.SetResponseCallback(block.Group, proxyCb)
 
 	commitInfo, byzVals := getBeginBlockValidatorInfo(block, lastValSet, stateDB)
@@ -287,7 +304,7 @@ func execBlockOnProxyApp(
 	}
 
 	// End block.
-	abciResponses.EndBlock, err = proxyAppConn.EndBlockSync(abci.RequestEndBlock{Height: block.Height})
+	abciResponses.EndBlock, err = proxyAppConn.EndBlockSync(abci.RequestEndBlock{Height: block.Height, Group: block.Group})
 	if err != nil {
 		logger.Error("Error in proxyAppConn.EndBlock", "err", err)
 		return nil, err

@@ -26,16 +26,17 @@ func (a ABCIApp) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
 	return &ctypes.ResultABCIInfo{Response: a.App.Info(proxy.RequestInfo)}, nil
 }
 
-func (a ABCIApp) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return a.ABCIQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
+func (a ABCIApp) ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return a.ABCIQueryWithOptions(group, path, data, client.DefaultABCIQueryOptions)
 }
 
-func (a ABCIApp) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+func (a ABCIApp) ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
 	q := a.App.Query(abci.RequestQuery{
 		Data:   data,
 		Path:   path,
 		Height: opts.Height,
 		Prove:  opts.Prove,
+		Group:  group,
 	})
 	return &ctypes.ResultABCIQuery{Response: q}, nil
 }
@@ -43,7 +44,7 @@ func (a ABCIApp) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts clien
 // NOTE: Caller should call a.App.Commit() separately,
 // this function does not actually wait for a commit.
 // TODO: Make it wait for a commit and set res.Height appropriately.
-func (a ABCIApp) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
+func (a ABCIApp) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
 	res := ctypes.ResultBroadcastTxCommit{}
 	res.CheckTx = a.App.CheckTx(tx)
 	if res.CheckTx.IsErr() {
@@ -54,7 +55,7 @@ func (a ABCIApp) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit
 	return &res, nil
 }
 
-func (a ABCIApp) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func (a ABCIApp) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	c := a.App.CheckTx(tx)
 	// and this gets written in a background thread...
 	if !c.IsErr() {
@@ -63,7 +64,7 @@ func (a ABCIApp) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error
 	return &ctypes.ResultBroadcastTx{Code: c.Code, Data: c.Data, Log: c.Log, Hash: tx.Hash()}, nil
 }
 
-func (a ABCIApp) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func (a ABCIApp) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	c := a.App.CheckTx(tx)
 	// and this gets written in a background thread...
 	if !c.IsErr() {
@@ -90,12 +91,12 @@ func (m ABCIMock) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
 	return &ctypes.ResultABCIInfo{Response: res.(abci.ResponseInfo)}, nil
 }
 
-func (m ABCIMock) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return m.ABCIQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
+func (m ABCIMock) ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return m.ABCIQueryWithOptions(group, path, data, client.DefaultABCIQueryOptions)
 }
 
-func (m ABCIMock) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
-	res, err := m.Query.GetResponse(QueryArgs{path, data, opts.Height, opts.Prove})
+func (m ABCIMock) ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+	res, err := m.Query.GetResponse(QueryArgs{group, path, data, opts.Height, opts.Prove})
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func (m ABCIMock) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts clie
 	return &ctypes.ResultABCIQuery{Response: resQuery}, nil
 }
 
-func (m ABCIMock) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
+func (m ABCIMock) BroadcastTxCommit(tx types.Tx, group int32) (*ctypes.ResultBroadcastTxCommit, error) {
 	res, err := m.BroadcastCommit.GetResponse(tx)
 	if err != nil {
 		return nil, err
@@ -111,7 +112,7 @@ func (m ABCIMock) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommi
 	return res.(*ctypes.ResultBroadcastTxCommit), nil
 }
 
-func (m ABCIMock) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func (m ABCIMock) BroadcastTxAsync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	res, err := m.Broadcast.GetResponse(tx)
 	if err != nil {
 		return nil, err
@@ -119,7 +120,7 @@ func (m ABCIMock) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, erro
 	return res.(*ctypes.ResultBroadcastTx), nil
 }
 
-func (m ABCIMock) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func (m ABCIMock) BroadcastTxSync(tx types.Tx, group int32) (*ctypes.ResultBroadcastTx, error) {
 	res, err := m.Broadcast.GetResponse(tx)
 	if err != nil {
 		return nil, err
@@ -142,6 +143,7 @@ func NewABCIRecorder(client client.ABCIClient) *ABCIRecorder {
 }
 
 type QueryArgs struct {
+	Group  int32
 	Path   string
 	Data   cmn.HexBytes
 	Height int64
@@ -167,15 +169,15 @@ func (r *ABCIRecorder) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
 	return res, err
 }
 
-func (r *ABCIRecorder) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-	return r.ABCIQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
+func (r *ABCIRecorder) ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return r.ABCIQueryWithOptions(group, path, data, client.DefaultABCIQueryOptions)
 }
 
-func (r *ABCIRecorder) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
-	res, err := r.Client.ABCIQueryWithOptions(path, data, opts)
+func (r *ABCIRecorder) ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+	res, err := r.Client.ABCIQueryWithOptions(group, path, data, opts)
 	r.addCall(Call{
 		Name:     "abci_query",
-		Args:     QueryArgs{path, data, opts.Height, opts.Prove},
+		Args:     QueryArgs{group, path, data, opts.Height, opts.Prove},
 		Response: res,
 		Error:    err,
 	})

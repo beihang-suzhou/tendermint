@@ -66,6 +66,7 @@ func (tm2pb) Header(header *Header) abci.Header {
 
 		EvidenceHash:    header.EvidenceHash,
 		ProposerAddress: header.ProposerAddress,
+		Group:           header.Group,
 	}
 }
 

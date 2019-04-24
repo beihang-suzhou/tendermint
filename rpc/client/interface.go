@@ -32,8 +32,8 @@ import (
 type ABCIClient interface {
 	// Reading from abci app
 	ABCIInfo() (*ctypes.ResultABCIInfo, error)
-	ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error)
-	ABCIQueryWithOptions(path string, data cmn.HexBytes,
+	ABCIQuery(group int32, path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error)
+	ABCIQueryWithOptions(group int32, path string, data cmn.HexBytes,
 		opts ABCIQueryOptions) (*ctypes.ResultABCIQuery, error)
 
 	// Writing to abci app

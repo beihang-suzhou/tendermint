@@ -379,6 +379,7 @@ type Header struct {
 	// consensus info
 	EvidenceHash    cmn.HexBytes `json:"evidence_hash"`    // evidence included in the block
 	ProposerAddress Address      `json:"proposer_address"` // original proposer of the block
+	Group           int32        `json:"group"`
 }
 
 // Populate the Header with state-derived data.
@@ -755,8 +756,7 @@ type Data struct {
 	// Txs that will be applied by state @ block.Height+1.
 	// NOTE: not all txs here are valid.  We're just agreeing on the order first.
 	// This means that block.AppHash does not include these txs.
-	Txs   Txs   `json:"txs"`
-	Group int32 `json:"group"`
+	Txs Txs `json:"txs"`
 	// Volatile
 	hash cmn.HexBytes
 }
