@@ -140,6 +140,10 @@ func (Local) TxSearch(query string, prove bool, page, perPage int) (*ctypes.Resu
 	return core.TxSearch(query, prove, page, perPage)
 }
 
+func (Local) TxSearch_BS(query string, prove bool, page, perPage int) (*ctypes.ResultTxSearch, error) {
+	return core.TxSearch_BS(query, prove, page, perPage)
+}
+
 func (c *Local) Subscribe(ctx context.Context, subscriber string, query tmpubsub.Query, out chan<- interface{}) error {
 	return c.EventBus.Subscribe(ctx, subscriber, query, out)
 }
