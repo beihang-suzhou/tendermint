@@ -37,11 +37,6 @@ func NewLocalClient(mtx *sync.Mutex, app types.Application) *localClient {
 func (app *localClient) SetResponseCallback(group int32, cb Callback) {
 	app.mtx.Lock()
 	app.calback[group] = cb
-	for key := range app.calback {
-		if key != group {
-			app.calback[key] = nil
-		}
-	}
 	app.mtx.Unlock()
 }
 
