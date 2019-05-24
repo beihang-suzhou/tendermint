@@ -51,6 +51,7 @@ type SignClient interface {
 	Validators(height *int64) (*ctypes.ResultValidators, error)
 	Tx(hash []byte, prove bool) (*ctypes.ResultTx, error)
 	TxSearch(query string, prove bool, page, perPage int) (*ctypes.ResultTxSearch, error)
+	TxSearch_BS(query string, prove bool, page, perPage int) (*ctypes.ResultTxSearch, error)
 }
 
 // HistoryClient shows us data from genesis to now in large chunks.

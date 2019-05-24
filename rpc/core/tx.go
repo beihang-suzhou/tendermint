@@ -228,3 +228,51 @@ func TxSearch(query string, prove bool, page, perPage int) (*ctypes.ResultTxSear
 
 	return &ctypes.ResultTxSearch{Txs: apiResults, TotalCount: totalCount}, nil
 }
+
+func TxSearch_BS(query string, prove bool, page, perPage int) (*ctypes.ResultTxSearch, error) {
+	// if index is disabled, return error
+	if _, ok := txIndexer.(*null.TxIndex); ok {
+		return nil, fmt.Errorf("Transaction indexing is disabled")
+	}
+
+	q, err := tmquery.New(query)
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := txIndexer.Search(q)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCount := len(results)
+	perPage = validatePerPage(perPage)
+	page = validatePage(page, perPage, totalCount)
+	//skipCount := validateSkipCount(page, perPage)
+
+	//apiResults := make([]*ctypes.ResultTx, cmn.MinInt(perPage, totalCount-skipCount))
+	var apiResults []*ctypes.ResultTx
+	var proof types.TxProof
+	// if there's no tx in the results array, we don't need to loop through the apiResults array
+	for i := 0; i < totalCount; i++ {
+		r := results[i]
+		height := r.Height
+		index := r.Index
+
+		if prove {
+			block := blockStore.LoadBlock(height)
+			proof = block.Data.Txs.Proof(int(index)) // XXX: overflow on 32-bit machines
+		}
+		rt := &ctypes.ResultTx{
+			Hash:     r.Tx.Hash(),
+			Height:   height,
+			Index:    index,
+			TxResult: r.Result,
+			Tx:       r.Tx,
+			Proof:    proof,
+		}
+		apiResults = append(apiResults, rt)
+	}
+
+	return &ctypes.ResultTxSearch{Txs: apiResults, TotalCount: totalCount}, nil
+}
